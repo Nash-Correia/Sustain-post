@@ -30,7 +30,7 @@ class Command(BaseCommand):
                     return
 
                 # Create superuser
-                user = User.objects.create_superuser(
+                user = CustomUser.objects.create_superuser(
                     username=username,
                     email=email,
                     password=password
