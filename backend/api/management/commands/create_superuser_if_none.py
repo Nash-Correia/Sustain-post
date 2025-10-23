@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
+from api.models import CustomUser
 from django.db import transaction
 import os
 
@@ -20,8 +20,8 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 # Check if superuser already exists
-                if User.objects.filter(is_superuser=True).exists():
-                    existing_superusers = User.objects.filter(is_superuser=True)
+                if CustomUser.objects.filter(is_superuser=True).exists():
+                    existing_superusers = CustomUser.objects.filter(is_superuser=True)
                     self.stdout.write(
                         self.style.SUCCESS(
                             f'Superuser(s) already exist: {", ".join([u.username for u in existing_superusers])}'

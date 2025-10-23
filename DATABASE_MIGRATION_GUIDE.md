@@ -180,10 +180,10 @@ python manage.py setup_database --create-demo-user
 ```bash
 # Check what's in your database
 python manage.py shell -c "
-from django.contrib.auth.models import User
+from api.models import CustomUser
 from api.models import Company, UserCompany
 print(f'Users: {User.objects.count()}')
-print(f'Superusers: {User.objects.filter(is_superuser=True).count()}')
+print(f'Superusers: {CustomUser.objects.filter(is_superuser=True).count()}')
 print(f'Companies: {Company.objects.count()}')
 print(f'Assignments: {UserCompany.objects.count()}')
 "

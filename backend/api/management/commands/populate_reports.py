@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
+from api.models import CustomUser
 from api.models import Report, UserReport
 
 
@@ -48,8 +48,8 @@ class Command(BaseCommand):
         
         # Create a sample admin user if it doesn't exist
         admin_username = 'admin'
-        if not User.objects.filter(username=admin_username).exists():
-            admin_user = User.objects.create_user(
+        if not CustomUser.objects.filter(username=admin_username).exists():
+            admin_user = CustomUser.objects.create_user(
                 username=admin_username,
                 email='admin@example.com',
                 password='admin123',
@@ -64,8 +64,8 @@ class Command(BaseCommand):
             
         # Create a sample regular user if it doesn't exist
         user_username = 'testuser'
-        if not User.objects.filter(username=user_username).exists():
-            regular_user = User.objects.create_user(
+        if not CustomUser.objects.filter(username=user_username).exists():
+            regular_user = CustomUser.objects.create_user(
                 username=user_username,
                 email='test@example.com',
                 password='test123'

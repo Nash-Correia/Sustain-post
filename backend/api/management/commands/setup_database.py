@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
+from api.models import CustomUser
 from django.db import transaction
 from api.models import Company, UserCompany
 # Import will be handled dynamically
@@ -33,8 +33,8 @@ class Command(BaseCommand):
     def create_superuser(self):
         self.stdout.write('\n1. Checking superuser accounts...')
         
-        if User.objects.filter(is_superuser=True).exists():
-            superusers = User.objects.filter(is_superuser=True)
+        if CustomUser.objects.filter(is_superuser=True).exists():
+            superusers = CustomUser.objects.filter(is_superuser=True)
             self.stdout.write(
                 self.style.SUCCESS(f'✓ Found existing superuser(s): {", ".join([u.username for u in superusers])}')
             )
@@ -97,7 +97,7 @@ class Command(BaseCommand):
                 # Assign some sample companies
                 if Company.objects.exists():
                     sample_companies = Company.objects.all()[:5]  # First 5 companies
-                    admin_user = User.objects.filter(is_superuser=True).first()
+                    admin_user = CustomUser.objects.filter(is_superuser=True).first()
                     
                     assignments_created = 0
                     for company in sample_companies:
@@ -124,8 +124,8 @@ class Command(BaseCommand):
         self.stdout.write('\n=== Database Summary ===')
         
         # Users
-        total_users = User.objects.count()
-        superusers = User.objects.filter(is_superuser=True).count()
+        total_users = CustomUser.objects.count()
+        superusers = CustomUser.objects.filter(is_superuser=True).count()
         self.stdout.write(f'Users: {total_users} total, {superusers} superusers')
         
         # Companies

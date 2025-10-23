@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User
+from api.models import CustomUser
 from django.core import serializers
 from django.db import transaction
 import json
@@ -100,7 +100,7 @@ class Command(BaseCommand):
                 
                 for obj in serializers.deserialize('json', user_data):
                     # Check if user already exists by username
-                    if User.objects.filter(username=obj.object.username).exists():
+                    if CustomUser.objects.filter(username=obj.object.username).exists():
                         self.stdout.write(
                             self.style.WARNING(f'Skipping existing user: {obj.object.username}')
                         )
