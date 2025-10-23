@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  /* ... existing colors ... */
+  --color-brand-dark: #1C1C1C;
+  --color-brand-action: #23B353;
+  --color-brand-surface: #EAF3F0;
+  --color-brand-bg-light: #F7F7F7;
+  --color-login-btn: #22C55E;
+  --color-teal-btn: #8FBCC4 ;
+
+
+
+  --color-environmental: #1C4439;
+  --color-social: #6DC7BC;
+  --color-governance: #C9DA8E;
+
+
+
+  /* NEW: Added a specific teal for headers based on your original design */
+  --color-brand-teal-dark: #195D5D;
+
+
+  /* ... existing rating colors ... */
+  --color-rating-a-plus: #196B24;
+  --color-rating-a: #4EA72E;
+  --color-rating-b-plus: #92D050;
+  --color-rating-b: #92D050;
+  --color-rating-c-plus: #DDB72B;
+  --color-rating-c: #D1A159;
+  --color-rating-d: #B37557;
+
+  /* ... existing ui colors ... */
+  --color-ui-text-primary: #1A202C;
+  --color-ui-text-secondary: #4A5568;
+  --color-ui-border: #E2E8F0;
+  --color-ui-fill: #F7FAFC;
+
+  --rounded-large: 1.25rem;
+}
+
+/* ... rest of the file is unchanged ... */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+html, body { 
+  height: 100%; 
+}
+
+input::placeholder, textarea::placeholder { 
+  color: #9ca3af;
+  opacity: 1; 
+}
+
