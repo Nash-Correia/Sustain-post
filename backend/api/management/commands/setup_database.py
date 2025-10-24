@@ -41,7 +41,7 @@ class Command(BaseCommand):
         else:
             try:
                 with transaction.atomic():
-                    user = User.objects.create_superuser(
+                    user = CustomUser.objects.create_superuser(
                         username='admin',
                         email='admin@iias.in',
                         password='admin123',
@@ -76,7 +76,7 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 # Create demo user
-                demo_user, created = User.objects.get_or_create(
+                demo_user, created = CustomUser.objects.get_or_create(
                     username='demo',
                     defaults={
                         'email': 'demo@example.com',
