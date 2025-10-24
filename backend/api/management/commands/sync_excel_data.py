@@ -15,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--file-path',
             type=str,
-            default=os.path.join(settings.BASE_DIR, '/api/data/data.xlsx'),
+            default=os.path.join(settings.BASE_DIR, '..', 'frontend', 'public', 'data.xlsx'),
             help='Path to the Excel file (default: frontend/public/data.xlsx)'
         )
         parser.add_argument(
