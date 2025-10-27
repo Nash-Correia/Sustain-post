@@ -642,9 +642,10 @@ function FundsSection({
     .slice(0, 5) as [string, { count: number; avgScore: number }][];
 
   return (
-    <div className="bg-white border border-gray-200 p-6 sm:p-8 space-y-8">
+    <div>
+    {/* <div className="bg-white border border-gray-200 p-6 sm:p-8 space-y-8"> */}
       {/* Fund analysis */}
-      <section>
+      {/* <section>
         <h3 className="text-2xl font-bold text-brand-action mb-1">
           {fundName} — Fund Analysis
         </h3>
@@ -737,7 +738,7 @@ function FundsSection({
             No companies available in this selection.
           </div>
         )}
-      </section>
+      </section> */}
       {/* Global universe tile pair */}
       {/* <section>
         <h3 className="text-2xl font-bold text-brand-dark mb-1">

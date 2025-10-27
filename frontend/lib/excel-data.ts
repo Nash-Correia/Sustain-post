@@ -21,7 +21,7 @@ export interface FundDataRow {
   score: number;
   percentage: string;
   grade: string;
-}
+} 
 
 export interface PortfolioCompany {
   isin: string;

@@ -6,45 +6,56 @@ import { motion } from "framer-motion";
 interface InsightCardProps {
   title: string;
   imageUrl?: string;
+  link?: string;
   onReadMore?: () => void;
 }
 
-const InsightCard = ({ title, imageUrl, onReadMore }: InsightCardProps) => (
-  <motion.article
-    className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm h-full flex flex-col"
-    whileHover={{ y: -5, boxShadow: "0 15px 25px rgba(0,0,0,0.1)" }}
-    transition={{ type: "spring", stiffness: 120, damping: 15 }}
-  >
-    <div className="aspect-video relative bg-gray-200">
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={title}
-          fill
-          className="object-cover"
-          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-          <span>No image available</span>
-        </div>
-      )}
-    </div>
-    <div className="p-5 flex-1 flex flex-col justify-between">
-      <h3 className="text-lg font-semibold text-brand-dark mb-4">{title}</h3>
-      <div className="text-left">
-        <button
-          type="button"
-          className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
-          onClick={onReadMore}
-          aria-label={`Read more about ${title}`}
-        >
-          Read More
-        </button>
+const InsightCard = ({ title, imageUrl, link, onReadMore }: InsightCardProps) => {
+  const handleReadMore = () => {
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    } else if (onReadMore) {
+      onReadMore();
+    }
+  };
+
+  return (
+    <motion.article
+      className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm h-full flex flex-col"
+      whileHover={{ y: -5, boxShadow: "0 15px 25px rgba(0,0,0,0.1)" }}
+      transition={{ type: "spring", stiffness: 120, damping: 15 }}
+    >
+      <div className="aspect-video relative bg-gray-200">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+            <span>No image available</span>
+          </div>
+        )}
       </div>
-    </div>
-  </motion.article>
-);
+      <div className="p-5 flex-1 flex flex-col justify-between">
+        <h3 className="text-lg font-semibold text-brand-dark mb-4">{title}</h3>
+        <div className="text-left">
+          <button
+            type="button"
+            className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
+            onClick={handleReadMore}
+            aria-label={`Read more about ${title}`}
+          >
+            Read More
+          </button>
+        </div>
+      </div>
+    </motion.article>
+  );
+};
 
 const ArrowIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -61,22 +72,45 @@ const ArrowIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export default function Insights() {
+  // Updated items with CORRECTED image paths (must start with /)
   const items = useMemo(
     () => [
-      { title: "SEBI's New Disclosure Norms" },
-      { title: "The Rise of ESG in India" },
-      { title: "Proxy Advisory Trends 2025" },
-      { title: "Corporate Governance in Nifty 50" },
-      { title: "Another Insight Headline" },
-      { title: "Digital Transformation in Finance" },
-      { title: "Sustainable Investment Strategies" },
-      { title: "AI in Financial Analysis" },
+      { 
+        title: "India Plans $77B Hydropower Expansion as Strategic Buffer to China's Upstream Dams",
+        imageUrl: "/news/India-Plans-77B-Hydropower-Expansion-as-Strategic-Buffer-to-Chinas-Upstream-Dams.jpg.webp",
+        link: "https://esgnews.com/india-plans-77b-hydropower-expansion-as-strategic-buffer-to-chinas-upstream-dams/"
+      },
+      { 
+        title: "Kerala Becomes First Indian State to Approve Comprehensive ESG Investment Policy",
+        imageUrl: "/news/Kerala-Becomes-First-Indian-State-to-Approve-Comprehensive-ESG-Investment-Policy.jpg.webp",
+        link: "https://esgnews.com/kerala-becomes-first-indian-state-to-approve-comprehensive-esg-investment-policy/"
+      },
+      { 
+        title: "RBI to Integrate Climate Resilience into India's Financial System",
+        imageUrl: "/news/RBI-to-Integrate-Climate-Resilience-into-Indias-Financial-System.jpg.webp",
+        link: "https://esgnews.com/rbi-to-integrate-climate-resilience-into-indias-financial-system/"
+      },
+      { 
+        title: "Boomitra's Carbon Farming Project in India Gains Verra Registration",
+        imageUrl: "/news/Boomitras-Carbon-Farming-Project-in-India-Gains-Verra-Registratio-1536x1021.jpeg.webp",
+        link: "https://esgnews.com/boomitras-carbon-farming-project-in-india-gains-verra-registration/"
+      },
+      { 
+        title: "Sembcorp Expands Indian Renewables Portfolio with $190M ReNew Solar Acquisition",
+        imageUrl: "/news/Sembcorp-Expands-Indian-Renewables-Portfolio-with-190M-ReNew-Solar-Acquisition.webp",
+        link: "https://esgnews.com/sembcorp-expands-indian-renewables-portfolio-with-190m-renew-solar-acquisition/"
+      },
+      { 
+        title: "India's Data Centre Industry: Powering Growth Sustainably?",
+        imageUrl: "/news/Indias-Data-Centre-Industry-Powering-Growth-Sustainably-1536x810.jpg.webp",
+        link: "https://esgnews.com/indias-data-centre-industry-powering-growth-sustainably/"
+      },
     ],
     []
   );
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isAutoScrolling, _setIsAutoScrolling] = useState(true); // setter not used => prefix with _
+  const [isAutoScrolling, _setIsAutoScrolling] = useState(true);
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const cardWidth = 320;
@@ -168,7 +202,6 @@ export default function Insights() {
       </div>
 
       <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        {/* Left */}
         <button
           type="button"
           onClick={() => scroll("left")}
@@ -179,7 +212,6 @@ export default function Insights() {
           <ArrowIcon className="h-6 w-6" />
         </button>
 
-        {/* Right */}
         <button
           type="button"
           onClick={() => scroll("right")}
@@ -190,7 +222,6 @@ export default function Insights() {
           <ArrowIcon className="h-6 w-6" />
         </button>
 
-        {/* Scrollable container */}
         <div
           ref={scrollContainerRef}
           className="flex gap-6 pb-4 -mb-4 overflow-x-auto scroll-smooth px-[calc((100%-960px)/2)]"
@@ -208,7 +239,8 @@ export default function Insights() {
             >
               <InsightCard
                 title={item.title}
-                onReadMore={() => console.log(`Reading: ${item.title}`)}
+                imageUrl={item.imageUrl}
+                link={item.link}
               />
             </motion.div>
           ))}
@@ -216,4 +248,4 @@ export default function Insights() {
       </div>
     </section>
   );
-};
+}

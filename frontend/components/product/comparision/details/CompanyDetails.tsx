@@ -50,7 +50,7 @@ const CompanyDetails = ({
     </div>
     <Bar
       value={eVal}
-      className="bg-[linear-gradient(90deg,#1C4439_0%,#2F7F63_50%,#6DC7BC_100%)]"
+      className="bg-[#1c4439]"
     />
     <div className="w-14 text-right text-sm font-bold text-gray-900 tabular-nums">
       {formatNumber(eVal)}
@@ -67,7 +67,7 @@ const CompanyDetails = ({
     </div>
     <Bar
       value={sVal}
-      className="bg-[linear-gradient(90deg,#1E40AF_0%,#3BAFDA_50%,#6DC7BC_100%)]"
+      className="bg-[#6dc7bc]"
     />
     <div className="w-14 text-right text-sm font-bold text-gray-900 tabular-nums">
       {formatNumber(sVal)}
@@ -84,7 +84,7 @@ const CompanyDetails = ({
     </div>
     <Bar
       value={gVal}
-      className="bg-[linear-gradient(90deg,#5A6B2F_0%,#9CB25A_50%,#C9DA8E_100%)]"
+      className="bg-[#c9da8e]"
     />
     <div className="w-14 text-right text-sm font-bold text-gray-900 tabular-nums">
       {formatNumber(gVal)}
