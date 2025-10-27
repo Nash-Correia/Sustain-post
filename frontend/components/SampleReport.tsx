@@ -28,21 +28,19 @@ export default function SampleReport() {
             >
               {/* Thumbnail Container */}
               <div className="bg-white border-2 border-gray-200 rounded-lg shadow-lg overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:scale-105">
-                <div className="relative bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{ width: '300px', height: '400px' }}>
-                  {/* Placeholder content for now */}
-                  <div className="text-center text-gray-600">
-                    <div className="mb-4">
-                      <svg className="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium">Sample Report Preview</p>
-                    <p className="text-xs text-gray-500 mt-1">Coming Soon</p>
-                  </div>
+                <div className="relative" style={{ width: '300px', height: '400px' }}>
+                  {/* Preview Image */}
+                  <Image
+                    src="/reports/sample_report_preview.png" // or .png
+                    alt="Sample ESG Report Preview"
+                    fill
+                    className="object-cover"
+                    sizes="300px"
+                  />
                   
                   {/* Overlay for hover effect */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-90 rounded-full p-3">
+                  <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white bg-opacity-95 rounded-full p-4 shadow-lg">
                       <svg 
                         className="w-8 h-8 text-teal-600" 
                         fill="none" 
@@ -64,11 +62,16 @@ export default function SampleReport() {
                       </svg>
                     </div>
                   </div>
+
+                  {/* Click indicator badge */}
+                  <div className="absolute top-3 right-3 bg-teal-600 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Click to view
+                  </div>
                 </div>
                 
                 {/* Preview Label */}
-                <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 text-center font-medium">
+                <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                  <p className="text-sm text-gray-700 text-center font-medium">
                     Click to view full report
                   </p>
                 </div>
@@ -78,7 +81,7 @@ export default function SampleReport() {
 
           {/* Additional Information */}
           <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 max-w-2xl mx-auto">
               This sample report demonstrates our ESG analysis framework, rating methodology, and comprehensive company assessment approach.
             </p>
           </div>

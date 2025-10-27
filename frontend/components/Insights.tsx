@@ -189,7 +189,7 @@ export default function Insights() {
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, y: 40 },
+    hidden: { opacity: 0, y: 5 },
     visible: { opacity: 1, y: 0 },
   };
 
@@ -224,7 +224,7 @@ export default function Insights() {
 
         <div
           ref={scrollContainerRef}
-          className="flex gap-6 pb-4 -mb-4 overflow-x-auto scroll-smooth px-[calc((100%-960px)/2)]"
+          className="flex gap-6 pb-4 -mb-4 py-6 overflow-x-auto scroll-smooth px-[calc((100%-960px)/2)]"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {[...items, ...items, ...items].map((item, index) => (
