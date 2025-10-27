@@ -195,11 +195,11 @@ export default function RatingTable(p: Props) {
                 <div className="text-center text-[14px] font-extrabold text-gray-900">{r.rating}</div>
                 
                 {/* File Name column (only in My Reports) */}
-                {mode === "mine" && (
+                {/* {mode === "mine" && (
                   <div className="text-center text-[13px] text-gray-700 truncate px-1">
                     {reportFilename}
                   </div>
-                )}
+                )} */}
                 
                 <div className="text-center">
                   {mode === "mine" ? (

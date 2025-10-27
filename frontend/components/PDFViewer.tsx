@@ -3,6 +3,10 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { authService } from "@/lib/auth";
 
+
+// Add this near the top
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000/api'; // Use the same logic as auth.ts
+
 interface PDFViewerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -42,7 +46,7 @@ export default function PDFViewer({
     try {
       const token = authService.getAccessToken();
       const response = await fetch(
-        `http://localhost:8000/api/reports/view/${encodeURIComponent(
+        `${API_BASE_URL}/reports/view/${encodeURIComponent(
           companyName
         )}/`,
         {
@@ -102,7 +106,7 @@ export default function PDFViewer({
     try {
       const token = authService.getAccessToken();
       const response = await fetch(
-        `http://localhost:8000/api/reports/download/${encodeURIComponent(
+        `${API_BASE_URL}/reports/download/${encodeURIComponent(
           companyName
         )}/`,
         {
