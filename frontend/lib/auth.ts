@@ -89,6 +89,15 @@ export interface PurchaseLogEntry {
   timestamp: string; // ISO format date string
   // company_isin?: string; // Optional
 }
+
+export interface PaginatedPurchaseLogResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PurchaseLogEntry[];
+}
+
+
 class AuthService {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -285,22 +294,46 @@ class AuthService {
 
 
   // Function to fetch purchase logs (admin only)
-async getPurchaseLogs(filters?: { last_n_days?: number }): Promise<PurchaseLogEntry[]> {
-    let queryString = '';
-    if (filters) {
-        const params = new URLSearchParams();
-        if (filters.last_n_days) {
-            params.append('last_n_days', filters.last_n_days.toString());
-        }
-        // Add other filters like start_date, end_date if needed
-        queryString = `?${params.toString()}`;
+
+// Update the function signature and query parameters
+async getPurchaseLogs(filters: {
+  page?: number;
+  pageSize?: number;
+  startDate?: string; // Expect YYYY-MM-DD
+  endDate?: string;   // Expect YYYY-MM-DD
+}): Promise<PaginatedPurchaseLogResponse> { // Return the paginated response structure
+    const params = new URLSearchParams();
+    if (filters.page) {
+        params.append('page', filters.page.toString());
+    }
+    if (filters.pageSize) {
+        params.append('page_size', filters.pageSize.toString());
+    }
+    if (filters.startDate) {
+        // Append time if backend expects datetime, otherwise just date is fine
+        params.append('start_date', `${filters.startDate}T00:00:00`);
+    }
+    if (filters.endDate) {
+        // Append time to include the whole end day
+        params.append('end_date', `${filters.endDate}T23:59:59`);
     }
 
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    // Note: Ensure makeRequest handles potential JSON parsing errors for non-2xx responses
     const response = await this.makeRequest(`/admin/purchase-logs/${queryString}`);
+
     if (!response.ok) {
-        throw new Error('Failed to fetch purchase logs');
+        // Try to parse error details
+        let errorMsg = 'Failed to fetch purchase logs';
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.detail || errorData.error || errorMsg;
+        } catch (e) { /* Ignore parsing error */ }
+        throw new Error(errorMsg);
     }
-    return response.json();
+    // Assume response is JSON with count, next, previous, results
+    return response.json() as Promise<PaginatedPurchaseLogResponse>;
 }
 }
 

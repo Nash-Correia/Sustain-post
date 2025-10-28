@@ -851,22 +851,22 @@ class PurchaseLogFilter(django_filters.FilterSet):
     start_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='gte')
     end_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='lte')
     # Add filtering for the last N days (e.g., last_100_days=true)
-    last_n_days = django_filters.NumberFilter(method='filter_last_n_days', label='Filter by last N days')
+    #last_n_days = django_filters.NumberFilter(method='filter_last_n_days', label='Filter by last N days')
 
     class Meta:
         model = PurchaseLog
-        fields = ['user', 'organization', 'job_title', 'start_date', 'end_date', 'last_n_days'] # Add other fields if needed
+        fields = ['user', 'organization', 'job_title', 'start_date', 'end_date'] # Add other fields if needed
 
-    def filter_last_n_days(self, queryset, name, value):
-        if value:
-            try:
-                days = int(value)
-                if days > 0:
-                    start_date = timezone.now() - timedelta(days=days)
-                    return queryset.filter(timestamp__gte=start_date)
-            except ValueError:
-                pass # Ignore invalid number
-        return queryset
+    # def filter_last_n_days(self, queryset, name, value):
+    #     if value:
+    #         try:
+    #             days = int(value)
+    #             if days > 0:
+    #                 start_date = timezone.now() - timedelta(days=days)
+    #                 return queryset.filter(timestamp__gte=start_date)
+    #         except ValueError:
+    #             pass # Ignore invalid number
+    #     return queryset
     
 class AdminPurchaseLogListView(generics.ListAPIView):
     """
