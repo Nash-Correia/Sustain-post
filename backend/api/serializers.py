@@ -169,7 +169,7 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
             'last_name',
             'organization',
             'job_title',
-            'timestamp'
+            'timestamp',
             'company_name',
             # 'company_isin', # Optional
         )
