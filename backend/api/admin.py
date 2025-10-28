@@ -231,6 +231,7 @@ class PurchaseLogAdmin(admin.ModelAdmin):
         'last_name',
         'organization',
         'job_title',
+        'company_name',
         'timestamp'
         # 'company_isin', # Optional
     )
@@ -239,6 +240,7 @@ class PurchaseLogAdmin(admin.ModelAdmin):
         'user', # Filter by user
         'organization',
         'job_title',
+        'company_name',
         # 'company_isin', # Optional
     )
     search_fields = (
@@ -247,9 +249,10 @@ class PurchaseLogAdmin(admin.ModelAdmin):
         'last_name',
         'organization',
         'job_title',
+        'company_name',
         # 'company_isin', # Optional
     )
-    readonly_fields = ('user', 'timestamp') # Prevent editing these fields in admin
+    readonly_fields = ('user', 'timestamp','company_name') # Prevent editing these fields in admin
 
     # Customize date filter options (optional)
     # Example: Show filters for last 7, 30, 90, 180, 365 days

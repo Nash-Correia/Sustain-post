@@ -85,6 +85,7 @@ export interface PurchaseLogEntry {
   last_name: string;
   organization: string;
   job_title: string;
+  company_name: string;
   timestamp: string; // ISO format date string
   // company_isin?: string; // Optional
 }

@@ -243,14 +243,15 @@ class PurchaseLog(models.Model):
     last_name = models.CharField(max_length=150, blank=True)
     organization = models.CharField(max_length=255, blank=True)
     job_title = models.CharField(max_length=255, blank=True)
+    company_name = models.CharField(max_length=255, blank=True, help_text="Name of the company report purchased/requested")
     # Consider adding info about *what* was purchased if needed (e.g., company ISIN)
     # company_isin = models.CharField(max_length=50, blank=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         username = self.user.username if self.user else f"Deleted User (ID: {self.user_id_recorded})"
-        return f"Purchase by {username} at {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
-
+        company_info = f" for {self.company_name}" if self.company_name else ""
+        return f"Purchase by {username}{company_info} at {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
     class Meta:
         ordering = ['-timestamp'] # Show newest logs first
         verbose_name = "Purchase Log Entry"

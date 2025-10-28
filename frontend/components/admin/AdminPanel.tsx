@@ -308,6 +308,7 @@ const AdminPanel: React.FC = () => {
                   <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Organization</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Company Name</th> 
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -319,13 +320,12 @@ const AdminPanel: React.FC = () => {
                       <td className="px-4 py-2 whitespace-nowrap">{`${log.first_name || ''} ${log.last_name || ''}`.trim()}</td>
                       <td className="px-4 py-2 whitespace-nowrap">{log.organization || '-'}</td>
                       <td className="px-4 py-2 whitespace-nowrap">{log.job_title || '-'}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{log.company_name || '-'}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-4 py-4 text-center text-gray-500">
-                      No logs found for the selected period.
-                    </td>
+                    <td colSpan={6} className="px-4 py-4 text-center text-gray-500">No logs found...</td>
                   </tr>
                 )}
               </tbody>

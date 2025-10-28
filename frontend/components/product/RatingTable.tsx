@@ -682,6 +682,7 @@ const handlePurchaseClick = async (companyIsin: string, companyName: string) => 
         'Authorization': `Bearer ${token}`,
       },
       // body: JSON.stringify({ company_isin: companyIsin }), // Optional: Send ISIN if your backend uses it
+      body: JSON.stringify({ company_name: companyName }),
     });
 
     if (!response.ok) {

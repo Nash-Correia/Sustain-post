@@ -822,27 +822,29 @@ def sync_excel_data(request):
 def log_purchase(request):
     """
     Logs a purchase action for the currently authenticated user.
-    Optionally accepts 'company_isin' in the request body.
+    Expects 'company_name' in the request body.
     """
     user = request.user
-    # company_isin = request.data.get('company_isin', '') # Optional: Get ISIN if needed
+    company_name = request.data.get('company_name', '') # Get company_name from request body
+
+    # Basic validation: ensure company name is provided
+    if not company_name:
+         return Response({"error": "Company name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         PurchaseLog.objects.create(
             user=user,
-            user_id_recorded=user.id, # Record ID explicitly
+            user_id_recorded=user.id,
             first_name=user.first_name or '',
             last_name=user.last_name or '',
-            organization=getattr(user, 'organization', '') or '', # Safely get attributes
+            organization=getattr(user, 'organization', '') or '',
             job_title=getattr(user, 'job_title', '') or '',
-            # company_isin=company_isin # Optional: Save ISIN
+            company_name=company_name # Save the company name
         )
         return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        # Log the error for debugging
-        print(f"Error logging purchase for user {user.username}: {e}")
+        print(f"Error logging purchase for user {user.username}, company {company_name}: {e}")
         return Response({"error": "Failed to log purchase."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
 
 class PurchaseLogFilter(django_filters.FilterSet):
     # Define filters - allow filtering by date range

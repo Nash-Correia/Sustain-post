@@ -170,6 +170,7 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
             'organization',
             'job_title',
             'timestamp'
+            'company_name',
             # 'company_isin', # Optional
         )
         read_only_fields = fields # Make all fields read-only in this context
