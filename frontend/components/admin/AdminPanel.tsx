@@ -5,9 +5,12 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { reportsAPI, type AdminUser } from '@/lib/auth';
 import AssignReportsModal from './NewAssignReportsModal';
 import UserReportsModal from './NewUserReportsModal';
+import { authService, type PurchaseLogEntry } from '@/lib/auth';
 
 const AdminPanel: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
+
+  // Users state
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,14 +19,21 @@ const AdminPanel: React.FC = () => {
   const [isUserReportsModalOpen, setIsUserReportsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
-  // Filter users based on search term
-  const filteredUsers = users.filter(u => 
-    u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.last_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Purchase logs state (now inside the component)
+  const [purchaseLogs, setPurchaseLogs] = useState<PurchaseLogEntry[]>([]);
+  const [logLoading, setLogLoading] = useState(false);
+  const [logError, setLogError] = useState<string | null>(null);
+  const [logFilterDays, setLogFilterDays] = useState<number>(100);
+
+  // Derived users (filter)
+  const filteredUsers = users.filter((u) =>
+    (u.username ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.first_name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.last_name ?? '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Load users
   const loadUsers = async () => {
     setLoading(true);
     setError(null);
@@ -38,11 +48,38 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Fetch users when authenticated & staff
   useEffect(() => {
     if (isAuthenticated && user?.is_staff) {
       loadUsers();
     }
   }, [isAuthenticated, user?.is_staff]);
+
+  // Fetch purchase logs for admins
+  useEffect(() => {
+    if (!(user?.is_staff || user?.is_superuser)) return;
+
+    let cancelled = false;
+    const fetchLogs = async () => {
+      setLogLoading(true);
+      setLogError(null);
+      try {
+        const logs = await authService.getPurchaseLogs({ last_n_days: logFilterDays });
+        if (!cancelled) setPurchaseLogs(logs);
+      } catch (err) {
+        if (!cancelled) {
+          setLogError(err instanceof Error ? err.message : 'Failed to load logs');
+        }
+      } finally {
+        if (!cancelled) setLogLoading(false);
+      }
+    };
+
+    fetchLogs();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.is_staff, user?.is_superuser, logFilterDays, authService]);
 
   const handleUserClick = (clickedUser: AdminUser) => {
     setSelectedUser(clickedUser);
@@ -55,26 +92,23 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will remove all their data including assigned reports.`)) {
+    if (!window.confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone and will remove all their data including assigned reports.`)) {
       return;
     }
-
     setLoading(true);
     try {
       await reportsAPI.deleteUser(userId);
-      // Refresh the users list
       await loadUsers();
-      // Clear any previous errors
       setError(null);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    setError(msg || 'Failed to delete user');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || 'Failed to delete user');
     } finally {
       setLoading(false);
     }
   };
 
-  // Authentication check
+  // Auth gate
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -85,13 +119,13 @@ const AdminPanel: React.FC = () => {
     );
   }
 
-  // Admin permission check
+  // Permission gate
   if (!user?.is_staff) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center p-8">
           <h2 className="text-xl font-semibold text-red-600">Access Denied</h2>
-          <p className="text-gray-600 mt-2">{`You don't have permission to access this admin panel`}</p>
+          <p className="text-gray-600 mt-2">You don&apos;t have permission to access this admin panel</p>
         </div>
       </div>
     );
@@ -113,7 +147,7 @@ const AdminPanel: React.FC = () => {
         >
           Assign Reports
         </button>
-        
+
         <div className="flex items-center gap-4">
           <input
             type="text"
@@ -138,40 +172,27 @@ const AdminPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Loading / Users Table */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <span className="ml-3 text-gray-600">Loading users...</span>
         </div>
       ) : (
-        /* Users Table */
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Users ({filteredUsers.length})
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">Users ({filteredUsers.length})</h2>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reports
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Reports</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -193,25 +214,21 @@ const AdminPanel: React.FC = () => {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
-                              {userData.first_name || userData.last_name 
+                              {userData.first_name || userData.last_name
                                 ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
                                 : userData.username}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              @{userData.username}
-                            </div>
+                            <div className="text-sm text-gray-500">@{userData.username}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userData.email}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{userData.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          userData.is_staff
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            userData.is_staff ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
                           {userData.is_staff ? 'Staff' : 'User'}
                         </span>
                       </td>
@@ -255,6 +272,67 @@ const AdminPanel: React.FC = () => {
         onClose={() => setIsUserReportsModalOpen(false)}
         user={selectedUser}
       />
+
+      {/* Purchase Logs */}
+      <div className="mt-8 p-4 border rounded-lg bg-white shadow-sm">
+        <h3 className="text-xl font-semibold mb-4">User Purchase Log</h3>
+
+        <div className="mb-4">
+          <label htmlFor="logFilterDays" className="mr-2 text-sm font-medium text-gray-700">
+            Show logs from last:
+          </label>
+          <select
+            id="logFilterDays"
+            value={logFilterDays}
+            onChange={(e) => setLogFilterDays(Number(e.target.value))}
+            className="border border-gray-300 rounded-md p-1 text-sm"
+          >
+            <option value={7}>7 days</option>
+            <option value={30}>30 days</option>
+            <option value={100}>100 days</option>
+            <option value={365}>1 year</option>
+            <option value={0}>All time</option>
+          </select>
+        </div>
+
+        {logLoading && <p className="text-gray-600">Loading logs...</p>}
+        {logError && <p className="text-red-600">Error: {logError}</p>}
+
+        {!logLoading && !logError && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {purchaseLogs.length > 0 ? (
+                  purchaseLogs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="px-4 py-2 whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{log.username}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{`${log.first_name || ''} ${log.last_name || ''}`.trim()}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{log.organization || '-'}</td>
+                      <td className="px-4 py-2 whitespace-nowrap">{log.job_title || '-'}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-4 text-center text-gray-500">
+                      No logs found for the selected period.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

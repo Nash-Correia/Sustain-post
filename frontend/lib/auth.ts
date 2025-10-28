@@ -75,6 +75,19 @@ export interface AuthResponse {
   refresh: string;
 }
 
+
+export interface PurchaseLogEntry {
+  id: number;
+  user: number; // User ID
+  username: string; // Added username
+  user_id_recorded: number;
+  first_name: string;
+  last_name: string;
+  organization: string;
+  job_title: string;
+  timestamp: string; // ISO format date string
+  // company_isin?: string; // Optional
+}
 class AuthService {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -268,6 +281,26 @@ class AuthService {
   getAccessToken(): string | null {
     return this.accessToken;
   }
+
+
+  // Function to fetch purchase logs (admin only)
+async getPurchaseLogs(filters?: { last_n_days?: number }): Promise<PurchaseLogEntry[]> {
+    let queryString = '';
+    if (filters) {
+        const params = new URLSearchParams();
+        if (filters.last_n_days) {
+            params.append('last_n_days', filters.last_n_days.toString());
+        }
+        // Add other filters like start_date, end_date if needed
+        queryString = `?${params.toString()}`;
+    }
+
+    const response = await this.makeRequest(`/admin/purchase-logs/${queryString}`);
+    if (!response.ok) {
+        throw new Error('Failed to fetch purchase logs');
+    }
+    return response.json();
+}
 }
 
 export const authService = new AuthService();
@@ -715,5 +748,7 @@ export const companyAPI = {
     }
     return response.json();
   },
+
+  
 };
 

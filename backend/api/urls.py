@@ -44,4 +44,7 @@ urlpatterns = [
     path('admin/remove-all-companies/<int:user_id>/', views.remove_all_companies_from_user, name='remove_all_companies'),
     path('admin/company-assignments/', views.admin_user_company_assignments, name='admin_company_assignments'),
     path('admin/sync-excel/', views.sync_excel_data, name='sync_excel'),
+
+    # Admin user log management
+    path('admin/purchase-logs/', views.AdminPurchaseLogListView.as_view(), name='admin_purchase_log_list'),
 ]

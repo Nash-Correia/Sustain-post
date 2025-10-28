@@ -2,7 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
-
+from django.conf import settings 
+from django.utils import timezone
 
 class CaseInsensitiveUsernameValidator(UnicodeUsernameValidator):
     """Username validator that ensures case-insensitive uniqueness"""
@@ -228,3 +229,29 @@ class Note(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class PurchaseLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL, # Keep log even if user is deleted
+        null=True, # Allow logs for potentially deleted users
+        related_name='purchase_logs'
+    )
+    # Store user details at the time of purchase, in case user profile changes later
+    user_id_recorded = models.IntegerField(null=True, blank=True) # Store ID explicitly
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    organization = models.CharField(max_length=255, blank=True)
+    job_title = models.CharField(max_length=255, blank=True)
+    # Consider adding info about *what* was purchased if needed (e.g., company ISIN)
+    # company_isin = models.CharField(max_length=50, blank=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        username = self.user.username if self.user else f"Deleted User (ID: {self.user_id_recorded})"
+        return f"Purchase by {username} at {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+    class Meta:
+        ordering = ['-timestamp'] # Show newest logs first
+        verbose_name = "Purchase Log Entry"
+        verbose_name_plural = "Purchase Log Entries"

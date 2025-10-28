@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Note, Report, UserReport, Company, Fund, UserCompany, CustomUser
+from .models import Note, Report, UserReport, Company, Fund, UserCompany, CustomUser,PurchaseLog
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for CustomUser model with profile fields built-in"""
@@ -153,3 +153,23 @@ class CompanyListSerializer(serializers.ModelSerializer):
             "isin", "company_name", "sector", "esg_sector", "esg_rating", "grade",
             "pdf_filename", "has_pdf_report"
         ]
+
+class PurchaseLogSerializer(serializers.ModelSerializer):
+    # Optionally display username instead of just user ID
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = PurchaseLog
+        fields = (
+            'id',
+            'user', # Foreign Key ID
+            'username', # Added for readability
+            'user_id_recorded',
+            'first_name',
+            'last_name',
+            'organization',
+            'job_title',
+            'timestamp'
+            # 'company_isin', # Optional
+        )
+        read_only_fields = fields # Make all fields read-only in this context

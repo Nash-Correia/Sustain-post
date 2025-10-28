@@ -8,6 +8,20 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .models import PurchaseLog 
+from rest_framework import status 
+from rest_framework.decorators import api_view, permission_classes 
+from rest_framework.permissions import IsAuthenticated 
+
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser # Use IsAdminUser permission
+from .models import PurchaseLog
+from .serializers import PurchaseLogSerializer
+from django.utils import timezone
+from datetime import timedelta
+from django_filters.rest_framework import DjangoFilterBackend # For filtering
+import django_filters # For creating filterset
+
 import os
 import pandas as pd
 
@@ -801,3 +815,68 @@ def sync_excel_data(request):
         return Response({"message": "Excel data synchronized successfully"})
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_purchase(request):
+    """
+    Logs a purchase action for the currently authenticated user.
+    Optionally accepts 'company_isin' in the request body.
+    """
+    user = request.user
+    # company_isin = request.data.get('company_isin', '') # Optional: Get ISIN if needed
+
+    try:
+        PurchaseLog.objects.create(
+            user=user,
+            user_id_recorded=user.id, # Record ID explicitly
+            first_name=user.first_name or '',
+            last_name=user.last_name or '',
+            organization=getattr(user, 'organization', '') or '', # Safely get attributes
+            job_title=getattr(user, 'job_title', '') or '',
+            # company_isin=company_isin # Optional: Save ISIN
+        )
+        return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error logging purchase for user {user.username}: {e}")
+        return Response({"error": "Failed to log purchase."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+class PurchaseLogFilter(django_filters.FilterSet):
+    # Define filters - allow filtering by date range
+    start_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='gte')
+    end_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='lte')
+    # Add filtering for the last N days (e.g., last_100_days=true)
+    last_n_days = django_filters.NumberFilter(method='filter_last_n_days', label='Filter by last N days')
+
+    class Meta:
+        model = PurchaseLog
+        fields = ['user', 'organization', 'job_title', 'start_date', 'end_date', 'last_n_days'] # Add other fields if needed
+
+    def filter_last_n_days(self, queryset, name, value):
+        if value:
+            try:
+                days = int(value)
+                if days > 0:
+                    start_date = timezone.now() - timedelta(days=days)
+                    return queryset.filter(timestamp__gte=start_date)
+            except ValueError:
+                pass # Ignore invalid number
+        return queryset
+    
+class AdminPurchaseLogListView(generics.ListAPIView):
+    """
+    API view for admins to list purchase logs.
+    Supports filtering by date range and last N days.
+    """
+    queryset = PurchaseLog.objects.all().select_related('user') # Optimize query
+    serializer_class = PurchaseLogSerializer
+    permission_classes = [IsAdminUser] # IMPORTANT: Only allow admin users
+    filter_backends = [DjangoFilterBackend] # Enable DjangoFilterBackend
+    filterset_class = PurchaseLogFilter # Use the filterset defined above
+
+    # Optional: Add ordering support if needed
+    # ordering_fields = ['timestamp', 'user__username']
+    # ordering = ['-timestamp']

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { companyAPI } from "@/lib/auth";
+import { companyAPI, authService } from "@/lib/auth";
 import PDFViewer from "@/components/PDFViewer";
 
 /**
@@ -214,12 +214,25 @@ export default function RatingTable(p: Props) {
                       <span className="text-[14px] text-gray-400">No Report</span>
                     )
                   ) : isLoggedIn ? (
-                    <button
-                      className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
-                      onClick={() => p.onRequest(r.company)}
-                    >
-                      Purchase
-                    </button>
+                  <button
+                    className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
+                      onClick={async () => {
+                        // Log the action first and wait for it to complete
+                        if (r.isin) { // Add a type guard to check if r.isin is defined
+                          const logged = await handlePurchaseClick(r.isin, r.company); // Pass isin and company name
+
+                          // Only proceed with the original action if logging was successful
+                          if (logged) {
+                            p.onRequest(r.company); // This is the original action
+                          } else {
+                            // Optional: Inform the user that the request couldn't be logged/processed
+                            console.log("Purchase action not logged, original request cancelled.");
+                          }
+                        }
+                      }}
+                  >
+                    Purchase
+                  </button>
                   ) : (
                     <button
                       className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
@@ -650,3 +663,39 @@ function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+const handlePurchaseClick = async (companyIsin: string, companyName: string) => {
+  console.log(`Purchase/Request initiated for ISIN: ${companyIsin}, Company: ${companyName}`);
+  try {
+    const token = authService.getAccessToken();
+    if (!token) {
+      console.error("User not authenticated, cannot log purchase.");
+      // Consider triggering a login modal here
+      // Example: p.onLoginRequired(); // Assuming you add such a prop
+      return false; // Indicate that logging failed
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/log-purchase/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      // body: JSON.stringify({ company_isin: companyIsin }), // Optional: Send ISIN if your backend uses it
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to log purchase:", errorData.error || response.statusText);
+      alert(`Failed to log purchase action: ${errorData.error || 'Please try again.'}`);
+      return false; // Indicate logging failed
+    } else {
+      console.log("Purchase action logged successfully.");
+      return true; // Indicate logging succeeded
+    }
+  } catch (error) {
+    console.error("Error calling log-purchase API:", error);
+    alert("An error occurred while logging the purchase action.");
+    return false; // Indicate logging failed
+  }
+};

@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect
 from django.urls import path, reverse
 from django.utils.safestring import mark_safe
 from .models import CustomUser, Company, UserCompany, Fund, Report, UserReport, Note
+from .models import PurchaseLog 
+from django.contrib.admin import DateFieldListFilter 
 
 # Inline for UserCompany assignments
 class UserCompanyInline(admin.TabularInline):
@@ -220,3 +222,44 @@ admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.site_header = "IiAS ESG Platform Admin"
 admin.site.site_title = "IiAS Admin Portal"
 admin.site.index_title = "Welcome to IiAS ESG Platform Administration"
+
+
+class PurchaseLogAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'first_name',
+        'last_name',
+        'organization',
+        'job_title',
+        'timestamp'
+        # 'company_isin', # Optional
+    )
+    list_filter = (
+        ('timestamp', DateFieldListFilter), # Enable date filtering
+        'user', # Filter by user
+        'organization',
+        'job_title',
+        # 'company_isin', # Optional
+    )
+    search_fields = (
+        'user__username', # Search by username
+        'first_name',
+        'last_name',
+        'organization',
+        'job_title',
+        # 'company_isin', # Optional
+    )
+    readonly_fields = ('user', 'timestamp') # Prevent editing these fields in admin
+
+    # Customize date filter options (optional)
+    # Example: Show filters for last 7, 30, 90, 180, 365 days
+    def __init__(self, model, admin_site):
+        super().__init__(model, admin_site)
+        # Find the timestamp filter and customize its choices
+        timestamp_filter = next((f for f in self.list_filter if isinstance(f, tuple) and f[0] == 'timestamp'), None)
+        if timestamp_filter:
+            # Customize choices for DateFieldListFilter
+            # See Django docs for DateFieldListFilter for available options if needed
+            pass # Default options include 'Past 7 days', 'This month', 'This year' etc.
+
+admin.site.register(PurchaseLog, PurchaseLogAdmin)
