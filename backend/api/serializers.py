@@ -93,8 +93,6 @@ class CompanySerializer(serializers.ModelSerializer):
             "grade", "positive", "negative", "controversy", "created_at", "updated_at"
         ]
 
-
-
 class UserCompanySerializer(serializers.ModelSerializer):
     """Serializer for UserCompany model"""
     company = CompanySerializer(read_only=True)
@@ -111,19 +109,12 @@ class UserCompanySerializer(serializers.ModelSerializer):
 class MyReportsSerializer(serializers.ModelSerializer):
     """Serializer for user's assigned companies in My Reports"""
     company_name = serializers.CharField(source='company.company_name', read_only=True)
-    esg_sector = serializers.SerializerMethodField()  # Get from database
-    esg_rating = serializers.SerializerMethodField()  # Get ESG Rating from database
+    sector = serializers.CharField(source='company.sector', read_only=True)  # Changed from SerializerMethodField
+    esg_sector = serializers.CharField(source='company.esg_sector', read_only=True)  # Keep esg_sector separate
+    esg_rating = serializers.CharField(source='company.esg_rating', read_only=True)  # Changed from SerializerMethodField
     isin = serializers.CharField(source='company.isin', read_only=True)
     report_filename = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
-    
-    def get_esg_sector(self, obj):
-        """Get sector from database"""
-        return obj.company.esg_sector or ''
-    
-    def get_esg_rating(self, obj):
-        """Get ESG Rating from database"""
-        return obj.company.esg_rating or ''
     
     def get_report_filename(self, obj):
         """Get the PDF filename from database"""
@@ -137,22 +128,16 @@ class MyReportsSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = UserCompany
-        fields = ["id", "isin", "company_name", "esg_sector", "esg_rating", "assigned_at", "notes", "report_filename", "download_url"]
+        fields = [
+            "id", "isin", "company_name", "sector", "esg_sector", "esg_rating", 
+            "assigned_at", "notes", "report_filename", "download_url"
+        ]
 
 class FundSerializer(serializers.ModelSerializer):
     """Serializer for Fund model"""
     class Meta:
         model = Fund
         fields = ["id", "fund_name", "score", "percentage", "grade", "created_at", "updated_at"]
-
-class CompanySerializer(serializers.ModelSerializer):
-    """Serializer for Company model with all fields"""
-    class Meta:
-        model = Company
-        fields = [
-            "isin", "company_name", "sector", "esg_rating", "pdf_filename",
-            "created_at", "updated_at"
-        ]
 
 class CompanyListSerializer(serializers.ModelSerializer):
     """Serializer for Company listing - supports both ESG Reports and Comparison Tool"""
@@ -165,6 +150,6 @@ class CompanyListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = [
-            "isin", "company_name", "esg_sector", "esg_rating", "grade",
+            "isin", "company_name", "sector", "esg_sector", "esg_rating", "grade",
             "pdf_filename", "has_pdf_report"
         ]
