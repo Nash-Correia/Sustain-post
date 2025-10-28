@@ -448,6 +448,7 @@ export interface AdminUser {
   last_name?: string;
   is_staff: boolean;
   organization?: string;
+  date_joined: string;
 }
 
 export interface AvailableReport {

@@ -337,7 +337,8 @@ def admin_users_list(request):
             'first_name': user.first_name,
             'last_name': user.last_name,
             'is_staff': user.is_staff,
-            'organization': user.organization or ''
+            'organization': user.organization or '',
+            'date_joined': user.date_joined.isoformat(), 
         })
     return Response(data)
 
