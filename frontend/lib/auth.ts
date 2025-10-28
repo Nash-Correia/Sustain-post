@@ -580,6 +580,7 @@ export interface Company {
 export interface CompanyListItem {
   isin: string;
   company_name: string;
+  sector?: string;
   esg_sector?: string;
   esg_rating?: string;
   grade?: string; // Legacy field for ESG Comparison Tool
@@ -591,6 +592,7 @@ export interface MyReportItem {
   id: number;
   isin: string;
   company_name: string;
+  sector?: string;
   esg_sector?: string;
   esg_rating?: string;
   assigned_at: string;

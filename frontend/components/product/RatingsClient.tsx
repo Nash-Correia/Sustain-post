@@ -76,7 +76,7 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
           .filter((c) => !!c.company_name && !!c.esg_rating)
           .map((c) => ({
             company: c.company_name,
-            sector: c.esg_sector || "—",
+            sector: c.sector || "—",
             rating: c.esg_rating || "—",
             year: 2024, // Default year for company ratings
             reportUrl: "#", // Will trigger download request
@@ -121,7 +121,7 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
   const myRows = useMemo<RatingRow[]>(() => {
     return myReports.map((mr): RatingRow => ({
       company: mr.company_name,
-      sector: mr.esg_sector || "—",
+      sector: mr.sector || "—",
       rating: mr.esg_rating || "—",
       year: 2024, // Default year for assigned companies
       reportUrl: mr.download_url || "#", // Secure download URL from backend
