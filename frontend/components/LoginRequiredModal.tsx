@@ -93,7 +93,7 @@ export default function LoginRequiredModal({ isOpen, onClose }: LoginRequiredMod
             {/* Additional Info */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-xs text-gray-500 text-center">
-                By signing in, you'll get access to:
+                By signing in, you will get access to:
               </p>
               <ul className="mt-3 space-y-2 text-xs text-gray-600">
                 <li className="flex items-center">
