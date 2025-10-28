@@ -99,6 +99,19 @@ export const tooltipData = {
     description:
       "The average ESG Composite Score for all covered companies in the selected sector across the broader IiAS universe (not limited to the fund). Useful as a sector benchmark on a 0–100 scale.",
   },
+    fundCoverage: {
+    title: "Fund Coverage Threshold",
+    description:
+      "Only funds with 85% or more of their total AUM covered are included",
+  },
+      companyCoverage: {
+    title: "Company Coverage",
+    description:
+"IiAS analyzes a broad range of companies, covering major players by market capitalization within key sectors for thorough ESG insights."  },
+      sectorCoverage: {
+    title: "Sector Coverage",
+    description:
+"IiAS analyzes diverse sectors and industries, offering a holistic perspective on market-wide ESG performance."  },
 
 } as const;
 

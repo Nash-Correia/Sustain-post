@@ -12,7 +12,11 @@ import React, {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchableSelect from "@/components/ui/SearchableSelect";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
+import { useAuth } from "@/components/auth/AuthProvider"; // Import auth hook
 import { clsx } from "@/lib/utils";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
+
 
 export type Tab = "Funds" | "Companies" | "Sectors";
 
@@ -24,7 +28,8 @@ interface TabbedSearchProps {
   fundData?: { [key: string]: { grade: string } };
   companyData?: { [key: string]: { grade: string } };
   sectorData?: { [key: string]: { grade: string } };
-  persistKey?: string; // sessionStorage key (clears on tab close)
+  persistKey?: string;
+  requireAuth?: boolean; // New prop to enable/disable auth requirement
 }
 
 export type TabbedSearchHandle = {
@@ -33,7 +38,7 @@ export type TabbedSearchHandle = {
   getActiveTab: () => Tab;
 };
 
-const DEFAULT_STORAGE_KEY = "tabbed-search-state:v3"; // v3 for sessionStorage migration
+const DEFAULT_STORAGE_KEY = "tabbed-search-state:v3";
 
 const buildActiveStyles = (): React.CSSProperties & Record<string, string> => ({
   borderBottomColor: "var(--color-login-btn, #10B981)",
@@ -81,7 +86,6 @@ type SelectionState = "idle" | "url-loading" | "storage-loading" | "ready";
 function safeLoad(key: string): PersistedState | null {
   if (typeof window === "undefined") return null;
   try {
-    // Use sessionStorage instead of localStorage - clears when tab closes
     const raw = window.sessionStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedState;
@@ -106,7 +110,6 @@ function safeLoad(key: string): PersistedState | null {
 function safeSave(key: string, state: PersistedState) {
   if (typeof window === "undefined") return;
   try {
-    // Use sessionStorage instead of localStorage - clears when tab closes
     window.sessionStorage.setItem(key, JSON.stringify(state));
   } catch {
     // ignore quota errors
@@ -140,10 +143,16 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
     companyData,
     sectorData,
     persistKey = DEFAULT_STORAGE_KEY,
+    requireAuth = true, // Default to requiring auth
   },
   ref
 ) {
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth(); // Get authentication status
+
+  // Login modal state
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingSelection, setPendingSelection] = useState<{ tab: Tab; value: string } | null>(null);
 
   // Core UI state
   const [activeTab, setActiveTab] = useState<Tab>("Funds");
@@ -179,17 +188,25 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
 
   const applySelection = useCallback(
     (tab: Tab, value: string, switchTab = false) => {
+      console.log('🎯 applySelection called:', {
+        tab,
+        value,
+        requireAuth,
+        isAuthenticated,
+        switchTab,
+        shouldBlock: requireAuth && !isAuthenticated && value
+      });
+
+      // Check authentication before applying selection
+      if (requireAuth && !isAuthenticated && value) {
+        console.log('🚫 Blocking applySelection - showing login modal');
+        setPendingSelection({ tab, value });
+        setShowLoginModal(true);
+        return "";
+      }
+
       const options = getOptionsForTab(tab);
       const canonical = ensureInOptions(value, options, tab);
-
-      // console.log("🎯 applySelection called:", { 
-      //   tab, 
-      //   value, 
-      //   canonical, 
-      //   switchTab,
-      //   currentTab: activeTab,
-      //   optionsCount: options.length 
-      // });
 
       if (switchTab && tab !== activeTab) {
         setActiveTab(tab);
@@ -208,12 +225,11 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
 
       return canonical;
     },
-    [activeTab, getOptionsForTab, onSelect, notifyClear]
+    [activeTab, getOptionsForTab, onSelect, notifyClear, requireAuth, isAuthenticated]
   );
 
   const inferTabFromValue = useCallback(
     (value: string): Tab | null => {
-      const lc = value.toLowerCase();
       const normalized = normalizeSectorLabel(value);
 
       if (
@@ -233,19 +249,37 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
     [fundOptions, companyOptions, sectorOptions]
   );
 
-  /* ====================== URL intent (stores pending, waits for options) ====================== */
+  // Handle successful login - apply pending selection
+  useEffect(() => {
+    console.log('🔐 Auth effect:', {
+      isAuthenticated,
+      hasPendingSelection: !!pendingSelection,
+      pendingSelection
+    });
+
+    if (isAuthenticated && pendingSelection) {
+      console.log('✅ User logged in! Applying pending selection...');
+      applySelection(pendingSelection.tab, pendingSelection.value, true);
+      setPendingSelection(null);
+      setShowLoginModal(false);
+    }
+  }, [isAuthenticated, pendingSelection, applySelection]);
+
+  // Debug: Monitor modal state
+  useEffect(() => {
+    console.log('🔔 Modal state changed:', {
+      showLoginModal,
+      pendingSelection,
+      requireAuth,
+      isAuthenticated
+    });
+  }, [showLoginModal, pendingSelection, requireAuth, isAuthenticated]);
+
+  /* ====================== URL intent ====================== */
   useEffect(() => {
     const q = (searchParams.get("q") || "").trim();
     const typeParam = (searchParams.get("type") || "").trim();
     const urlKey = `${q}|${typeParam}`;
-
-    // console.log("📍 URL effect running:", { 
-    //   q, 
-    //   typeParam, 
-    //   urlKey, 
-    //   lastUrlKey: lastUrlParamsRef.current,
-    //   urlChanged: lastUrlParamsRef.current !== urlKey
-    // });
 
     const urlChanged = lastUrlParamsRef.current !== urlKey;
     
@@ -254,12 +288,10 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
       if (initializationPhaseRef.current === "pending") {
         initializationPhaseRef.current = "url-checked";
       }
-      //console.log("⚪ No URL params, skipping");
       return;
     }
 
     if (urlChanged) {
-      //console.log("✅ URL CHANGED! Storing pending selection...");
       lastUrlParamsRef.current = urlKey;
       setLoadingState("url-loading");
 
@@ -269,22 +301,15 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
           : null;
 
       if (!targetTab) {
-        //console.log("🔍 No type param, inferring from value...");
         targetTab = inferTabFromValue(q) || "Sectors";
       }
 
-      //console.log("🎯 Target tab determined:", targetTab, "for value:", q);
-
-      // CRITICAL: Store pending, don't apply immediately
       pendingUrlSelectionRef.current = { tab: targetTab, value: q };
-      //console.log("💾 Stored pending selection:", pendingUrlSelectionRef.current);
       
       if (initializationPhaseRef.current !== "complete") {
         initializationPhaseRef.current = "complete";
         isInitialMount.current = false;
       }
-    } else {
-      //console.log("⏭️ URL unchanged, skipping");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -295,32 +320,21 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
     if (!pending) return;
 
     const options = getOptionsForTab(pending.tab);
-    
-    // console.log("🔄 Checking pending selection:", {
-    //   tab: pending.tab,
-    //   value: pending.value,
-    //   optionsCount: options.length,
-    //   hasOptions: options.length > 0
-    // });
 
     if (options.length > 0) {
-      //console.log("✨ Options ready! Applying pending selection NOW!");
       applySelection(pending.tab, pending.value, true);
       pendingUrlSelectionRef.current = null;
       setLoadingState("ready");
-    } else {
-      //console.log("⏳ Options not ready yet, waiting...");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fundOptions, companyOptions, sectorOptions, getOptionsForTab]);
 
-  /* ====================== SessionStorage (only if no URL intent) ====================== */
+  /* ====================== SessionStorage ====================== */
   useEffect(() => {
     if (!isInitialMount.current) return;
     if (initializationPhaseRef.current !== "url-checked") return;
 
     const saved = safeLoad(persistKey);
-    //console.log("📦 Loaded from sessionStorage:", saved);
     initializationPhaseRef.current = "storage-checked";
 
     if (!saved) {
@@ -352,7 +366,7 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistKey, fundOptions, companyOptions, sectorOptions, onSelect]);
 
-  /* ====================== sessionStorage Persistence (debounced, clears on tab close) ====================== */
+  /* ====================== sessionStorage Persistence ====================== */
   useEffect(() => {
     if (initializationPhaseRef.current !== "complete") return;
 
@@ -370,7 +384,6 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
         },
       };
       safeSave(persistKey, state);
-      //console.log("💾 Saved to sessionStorage (clears on tab close):", state);
     }, 300);
 
     return () => {
@@ -380,7 +393,7 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
     };
   }, [persistKey, activeTab, selectedFund, selectedCompany, selectedSector]);
 
-  /* ====================== Validate selections when options change ====================== */
+  /* ====================== Validate selections ====================== */
   useEffect(() => {
     if (loadingState !== "ready") return;
 
@@ -457,10 +470,27 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
 
   const handleSelection = useCallback(
     (value: string) => {
+      console.log('🔍 handleSelection called:', {
+        value,
+        requireAuth,
+        isAuthenticated,
+        activeTab,
+        shouldBlock: requireAuth && !isAuthenticated && value
+      });
+
+      // Check authentication before allowing selection
+      if (requireAuth && !isAuthenticated && value) {
+        console.log('🚫 Blocking selection - showing login modal');
+        setPendingSelection({ tab: activeTab, value });
+        setShowLoginModal(true);
+        return;
+      }
+
+      console.log('✅ Allowing selection');
       setter(value);
       onSelect(value, activeTab);
     },
-    [setter, onSelect, activeTab]
+    [setter, onSelect, activeTab, requireAuth, isAuthenticated]
   );
 
   /* ====================== Imperative API ====================== */
@@ -498,56 +528,103 @@ const TabbedSearch = forwardRef<TabbedSearchHandle, TabbedSearchProps>(function 
   const isLoading = loadingState === "url-loading" || loadingState === "storage-loading";
 
   return (
-    <div className="space-y-6 z-35">
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sm:p-8">
-        <h2 className="text-2xl font-bold text-brand-dark mb-6">ESG Rating Comparison</h2>
+    <>
+      <div className="space-y-6 z-35">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 sm:p-8">
+          <h2 className="text-2xl font-bold text-brand-dark mb-6">ESG Rating Comparison</h2>
 
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-1">
-            <TabButton active={activeTab === "Funds"} onClick={() => handleTabSwitch("Funds")}>
-              Funds
-            </TabButton>
-            <TabButton active={activeTab === "Sectors"} onClick={() => handleTabSwitch("Sectors")}>
-              Sectors
-            </TabButton>
-            <TabButton active={activeTab === "Companies"} onClick={() => handleTabSwitch("Companies")}>
-              Companies
-            </TabButton>
-          </nav>
-        </div>
-
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "var(--color-login-btn, #10B981)" }} />
-            <span className="text-sm font-medium text-gray-700">Searching in {activeTab}</span>
-            {isLoading && (
-              <span className="ml-auto text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 animate-pulse">
-                Loading...
-              </span>
-            )}
-            {!isLoading && gradePeek && (
-              <span className="ml-auto text-xs px-2 py-1 rounded-full bg-brand-surface text-brand-dark border border-ui-border">
-                Grade: <b>{gradePeek}</b>
-              </span>
-            )}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-1">
+              <TabButton active={activeTab === "Funds"} onClick={() => handleTabSwitch("Funds")}>
+                Funds
+              </TabButton>
+              <TabButton active={activeTab === "Sectors"} onClick={() => handleTabSwitch("Sectors")}>
+                Sectors
+              </TabButton>
+              <TabButton active={activeTab === "Companies"} onClick={() => handleTabSwitch("Companies")}>
+                Companies
+              </TabButton>
+            </nav>
           </div>
 
-          <SearchableSelect
-            key={`${activeTab}-${searchKey}`}
-            options={currentOptions}
-            selected={selected}
-            onChange={handleSelection}
-            placeholder={getPlaceholder()}
-          />
-
-          {currentOptions.length > 0 && (
-            <div className="text-xs text-gray-500">
-              {currentOptions.length} {activeTab.toLowerCase()} available
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "var(--color-login-btn, #10B981)" }} />
+              <span className="text-sm font-medium text-gray-700">Searching in {activeTab}</span>
+              {isLoading && (
+                <span className="ml-auto text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 animate-pulse">
+                  Loading...
+                </span>
+              )}
+              {!isLoading && gradePeek && (
+                <span className="ml-auto text-xs px-2 py-1 rounded-full bg-brand-surface text-brand-dark border border-ui-border">
+                  Grade: <b>{gradePeek}</b>
+                </span>
+              )}
             </div>
-          )}
+
+            <SearchableSelect
+              key={`${activeTab}-${searchKey}`}
+              options={currentOptions}
+              selected={selected}
+              onChange={handleSelection}
+              placeholder={getPlaceholder()}
+            />
+
+            {currentOptions.length > 0 && (
+              <div className="text-xs text-gray-500 flex items-center gap-2">
+                {currentOptions.length} {activeTab.toLowerCase()} available
+                {activeTab === "Funds" && (
+                  <InfoTooltip
+                    id="fundCoverage"
+                    mode="hover"
+                    align="right"
+                    panelWidthClass="w-80"
+                  />
+                )}
+                {activeTab === "Companies" && (
+                  <InfoTooltip
+                    id="companyCoverage"
+                    mode="hover"
+                    align="right"
+                    panelWidthClass="w-80"
+                  />
+                )}
+                {activeTab === "Sectors" && (
+                  <InfoTooltip
+                    id="sectorCoverage"
+                    mode="hover"
+                    align="right"
+                    panelWidthClass="w-80"
+                  />
+                )}
+              </div>
+            )}
+
+
+
+            {/* Authentication notice */}
+            {/* {requireAuth && !isAuthenticated && (
+              <div className="mt-4 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+                <p className="text-sm text-teal-700">
+                  <span className="font-semibold">Sign in required:</span> Please log in to view detailed ESG ratings and comparison data.
+                </p>
+              </div>
+            )} */}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Login Required Modal */}
+      <LoginRequiredModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          console.log('❌ Login modal closed');
+          setShowLoginModal(false);
+          setPendingSelection(null);
+        }}
+      />
+    </>
   );
 });
 

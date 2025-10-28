@@ -579,6 +579,8 @@ export default function ProductAPage() {
               companyOptions={companyOptions}
               sectorOptions={sectorOptions}
               onSelect={handleSelection}
+              requireAuth={true} // Set to false to disable auth requirement
+
             />
 
             {selectedItem ? (
