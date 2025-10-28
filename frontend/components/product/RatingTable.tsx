@@ -695,7 +695,7 @@ const handlePurchaseClick = async (companyIsin: string, companyName: string) => 
     }
   } catch (error) {
     console.error("Error calling log-purchase API:", error);
-    alert("An error occurred while logging the purchase action.");
+    //alert("An error occurred while logging the purchase action.");
     return false; // Indicate logging failed
   }
 };

@@ -47,4 +47,5 @@ urlpatterns = [
 
     # Admin user log management
     path('admin/purchase-logs/', views.AdminPurchaseLogListView.as_view(), name='admin_purchase_log_list'),
+    path('log-purchase/', views.log_purchase, name='log_purchase'),
 ]
