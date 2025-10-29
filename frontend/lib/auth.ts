@@ -84,8 +84,8 @@ export interface PurchaseLogEntry {
   first_name: string;
   last_name: string;
   organization: string;
-  phone_number?: string | null;
-  email?: string | null;
+  phone_number: string | null;
+  email: string | null;
   job_title: string;
   company_name: string;
   timestamp: string; // ISO format date string

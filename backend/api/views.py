@@ -834,9 +834,16 @@ def log_purchase(request):
     try:
         # Only save the non-redundant data
         PurchaseLog.objects.create(
-            user=user,
-            company_name=company_name
-            # All other fields (first_name, etc.) are removed
+                user=user,
+                user_id_recorded=user.id,
+                username=user.username,
+                first_name=user.first_name or "",
+                last_name=user.last_name or "",
+                organization=getattr(user, "organization", "") or "",
+                job_title=getattr(user, "job_title", "") or "",
+                company_name=company_name,
+                phone_number=getattr(user, "phone_number", "") or "",  # ← important
+                email=user.email or "",    
         )
         return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
     except Exception as e:
@@ -853,7 +860,8 @@ class PurchaseLogFilter(django_filters.FilterSet):
 
     class Meta:
         model = PurchaseLog
-        fields = ['user', 'organization', 'job_title', 'start_date', 'end_date'] # Add other fields if needed
+        #fields = ['user', 'organization', 'phone_number','email', 'start_date', 'end_date'] # Add other fields if needed
+        fields = ['user', 'organization', 'phone_number','email'] # Add other fields if needed
 
     # def filter_last_n_days(self, queryset, name, value):
     #     if value:

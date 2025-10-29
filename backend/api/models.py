@@ -237,32 +237,6 @@ class PurchaseLog(models.Model):
         null=True, # Allow logs for potentially deleted users
         related_name='purchase_logs'
     )
-    # user_id_recorded = models.IntegerField(null=True, blank=True) # REMOVED
-    # first_name = models.CharField(max_length=150, blank=True) # REMOVED
-    # last_name = models.CharField(max_length=150, blank=True) # REMOVED
-    # organization = models.CharField(max_length=255, blank=True) # REMOVED
-    # job_title = models.CharField(max_length=255, blank=True) # REMOVED
-    # email = models.EmailField(max_length=254, blank=True) # REMOVED
-    # contact_no = models.CharField(max_length=20, blank=True) # REMOVED
-
-    company_name = models.CharField(max_length=255, blank=True, help_text="Name of the company report purchased/requested")
-    timestamp = models.DateTimeField(default=timezone.now)
-
-    def __str__(self):
-        username = self.user.username if self.user else "Deleted User"
-        company_info = f" for {self.company_name}" if self.company_name else ""
-        return f"Purchase by {username}{company_info} at {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
-
-    class Meta:
-        ordering = ['-timestamp']
-        verbose_name = "Purchase Log Entry"
-        verbose_name_plural = "Purchase Log Entries"
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL, # Keep log even if user is deleted
-        null=True, # Allow logs for potentially deleted users
-        related_name='purchase_logs'
-    )
     # Store user details at the time of purchase, in case user profile changes later
     user_id_recorded = models.IntegerField(null=True, blank=True) # Store ID explicitly
     first_name = models.CharField(max_length=150, blank=True)
@@ -272,7 +246,7 @@ class PurchaseLog(models.Model):
     company_name = models.CharField(max_length=255, blank=True, help_text="Name of the company report purchased/requested")
     # Consider adding info about *what* was purchased if needed (e.g., company ISIN)
     # company_isin = models.CharField(max_length=50, blank=True)
-    contact_no = models.CharField(max_length=32, blank=True, default='')
+    phone_number = models.CharField(max_length=32, blank=True, default='')
     email = models.EmailField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
