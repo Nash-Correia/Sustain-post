@@ -14,8 +14,10 @@ import UserReportsModal from './NewUserReportsModal';
 
 const LOGS_PER_PAGE = 7;
 
-// If your shared AdminUser type doesn't yet include date_joined,
-// we extend it locally to avoid TS errors without touching your lib.
+type TabKey = 'users' | 'logs';
+
+// If your shared AdminUser type doesn't include date_joined,
+// extend it locally to avoid TS errors without touching your lib.
 type AdminUser = BaseAdminUser & {
   date_joined?: string; // ISO string
 };
@@ -23,7 +25,10 @@ type AdminUser = BaseAdminUser & {
 const AdminPanel: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
 
-  // --- Users State ---
+  // ---------- Tabs ----------
+  const [tab, setTab] = useState<TabKey>('users');
+
+  // ---------- Users State ----------
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
@@ -32,7 +37,7 @@ const AdminPanel: React.FC = () => {
   const [isUserReportsModalOpen, setIsUserReportsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
-  // --- Purchase Logs State ---
+  // ---------- Purchase Logs State ----------
   const [purchaseLogs, setPurchaseLogs] = useState<PurchaseLogEntry[]>([]);
   const [logLoading, setLogLoading] = useState(false);
   const [logError, setLogError] = useState<string | null>(null);
@@ -42,7 +47,7 @@ const AdminPanel: React.FC = () => {
   const [hasMoreLogs, setHasMoreLogs] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // --- Helpers ---
+  // ---------- Helpers ----------
   const isNewUser = (iso?: string) => {
     if (!iso) return false;
     const joined = new Date(iso).getTime();
@@ -58,17 +63,16 @@ const AdminPanel: React.FC = () => {
     return Number.isNaN(d.valueOf()) ? '-' : d.toLocaleDateString();
   };
 
-  // --- Refs for Infinite Scroll ---
+  // ---------- Refs for Infinite Scroll (Logs) ----------
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
-  // --- User Management ---
+  // ---------- Users: load list ----------
   const loadUsers = useCallback(async () => {
     setLoadingUsers(true);
     setUserError(null);
     try {
       const usersData = await reportsAPI.getAdminUsersList();
-      // We expect backend to include date_joined (ISO string). If not, it still works.
       setUsers((usersData || []) as AdminUser[]);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -110,7 +114,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Search + Sort (newest → oldest)
+  // ---------- Users: search + sort (newest first) ----------
   const filteredUsers = users.filter((u) =>
     (u.username ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (u.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,13 +128,14 @@ const AdminPanel: React.FC = () => {
     return bTime - aTime; // DESC: newest first
   });
 
-  // --- Purchase Log Fetching Logic ---
+  // ---------- Logs: fetch (only when logs tab is active) ----------
   const fetchLogs = useCallback(
     async (
       page: number,
       filters: { startDate?: string; endDate?: string },
       replaceLogs: boolean = false
     ) => {
+      if (tab !== 'logs') return; // don't fetch when not on logs tab
       if (!user?.is_staff && !user?.is_superuser) return;
 
       setLogLoading(true);
@@ -154,20 +159,23 @@ const AdminPanel: React.FC = () => {
         setIsInitialLoad(false);
       }
     },
-    [user]
+    [tab, user]
   );
 
-  // Initial logs & when filters change
+  // When switching to logs tab or adjusting filters, (re)load logs
   useEffect(() => {
+    if (tab !== 'logs') return;
     setIsInitialLoad(true);
     setPurchaseLogs([]);
     setCurrentPage(1);
     setHasMoreLogs(true);
     fetchLogs(1, { startDate, endDate }, true);
-  }, [startDate, endDate, fetchLogs]);
+  }, [tab, startDate, endDate, fetchLogs]);
 
-  // Intersection Observer for infinite scroll
+  // Mount IntersectionObserver only for logs tab
   useEffect(() => {
+    if (tab !== 'logs') return;
+
     observerRef.current = new IntersectionObserver((entries) => {
       const firstEntry = entries[0];
       if (firstEntry.isIntersecting && hasMoreLogs && !logLoading && !isInitialLoad) {
@@ -186,9 +194,9 @@ const AdminPanel: React.FC = () => {
       }
       observerRef.current?.disconnect();
     };
-  }, [hasMoreLogs, logLoading, currentPage, startDate, endDate, fetchLogs, isInitialLoad]);
+  }, [tab, hasMoreLogs, logLoading, currentPage, startDate, endDate, fetchLogs, isInitialLoad]);
 
-  // --- Auth/Permission Gates ---
+  // ---------- Auth/Permission Gates ----------
   if (!isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -210,261 +218,283 @@ const AdminPanel: React.FC = () => {
     );
   }
 
-  // --- Render ---
+  // ---------- Render ----------
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
         <p className="text-gray-600 mt-2">Manage user report assignments and access</p>
       </div>
 
-      {/* Action Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      {/* Tabs */}
+      <div role="tablist" aria-label="Admin sections" className="mb-2 flex gap-2">
         <button
-          onClick={() => setIsAssignModalOpen(true)}
-          className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          role="tab"
+          aria-selected={tab === 'users'}
+          onClick={() => setTab('users')}
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium ${
+            tab === 'users'
+              ? 'bg-white border-x border-t border-gray-300 text-gray-900'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
         >
-          Assign Reports
+          Users
         </button>
-        <div className="flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[300px]"
-          />
-          <button
-            onClick={loadUsers}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            Refresh Users
-          </button>
-        </div>
+        <button
+          role="tab"
+          aria-selected={tab === 'logs'}
+          onClick={() => setTab('logs')}
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium ${
+            tab === 'logs'
+              ? 'bg-white border-x border-t border-gray-300 text-gray-900'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          }`}
+        >
+          Purchase logs
+        </button>
       </div>
 
-      {/* User Error */}
-      {userError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{userError}</p>
-        </div>
-      )}
+      {/* Tab Panels */}
+      <div className="rounded-t-none rounded-b-[14px] border border-gray-300 bg-white shadow-sm">
+        {/* USERS PANEL */}
+        {tab === 'users' && (
+          <div role="tabpanel" className="p-0">
+            {/* Action Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 border-b border-gray-200">
+              <button
+                onClick={() => setIsAssignModalOpen(true)}
+                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Assign Reports
+              </button>
+              <div className="flex items-center gap-4">
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[300px]"
+                />
+                <button
+                  onClick={loadUsers}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Refresh Users
+                </button>
+              </div>
+            </div>
 
-      {/* Users Table */}
-      {loadingUsers ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-          <span className="ml-3 text-gray-600">Loading users...</span>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Users ({sortedFilteredUsers.length})
-            </h2>
-          </div>
+            {/* User Error */}
+            {userError && (
+              <div className="m-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700">{userError}</p>
+              </div>
+            )}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Joined
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Reports
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedFilteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      {searchTerm ? 'No users match your search' : 'No users found'}
-                    </td>
-                  </tr>
-                ) : (
-                  sortedFilteredUsers.map((userData) => (
-                    <tr key={userData.id} className="hover:bg-gray-50">
-                      {/* User cell with NEW badge */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-gray-600 font-medium text-sm">
-                              {userData.username?.charAt(0).toUpperCase() || '?'}
-                            </span>
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                              {(userData.first_name || userData.last_name)
-                                ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
-                                : userData.username}
-                              {isNewUser(userData.date_joined) && (
-                                <span className="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                                  NEW
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-gray-500">@{userData.username}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {userData.email}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            userData.is_staff ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {userData.is_staff ? 'Staff' : 'User'}
-                        </span>
-                      </td>
-
-                      {/* Joined column */}
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {fmtDate(userData.date_joined)}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                        <button
-                          onClick={() => handleUserClick(userData)}
-                          className="text-blue-600 hover:text-blue-900 hover:underline"
-                        >
-                          Edit Assignments
-                        </button>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {!userData.is_staff && (
-                          <button
-                            onClick={() => handleDeleteUser(userData.id, userData.username)}
-                            className="text-red-600 hover:text-red-900 hover:underline"
-                          >
-                            Remove User
-                          </button>
-                        )}
-                      </td>
+            {/* Users Table */}
+            {loadingUsers ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <span className="ml-3 text-gray-600">Loading users...</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Users ({sortedFilteredUsers.length})
+                  </h2>
+                </div>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Reports</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sortedFilteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                          {searchTerm ? 'No users match your search' : 'No users found'}
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedFilteredUsers.map((userData) => (
+                        <tr key={userData.id} className="hover:bg-gray-50">
+                          {/* User cell with NEW badge */}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                <span className="text-gray-600 font-medium text-sm">
+                                  {userData.username?.charAt(0).toUpperCase() || '?'}
+                                </span>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                                  {(userData.first_name || userData.last_name)
+                                    ? `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
+                                    : userData.username}
+                                  {isNewUser(userData.date_joined) && (
+                                    <span className="ml-1 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+                                      NEW
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-500">@{userData.username}</div>
+                              </div>
+                            </div>
+                          </td>
 
-      {/* --- Purchase Logs Section --- */}
-      <div className="mt-8 p-4 border rounded-lg bg-white shadow-sm">
-        <h3 className="text-xl font-semibold mb-4">User Purchase Log</h3>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {userData.email}
+                          </td>
 
-        {/* Filters */}
-        <div className="mb-4 flex flex-wrap items-center gap-4">
-          <div>
-            <label htmlFor="startDate" className="mr-2 text-sm font-medium text-gray-700">
-              From:
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded-md p-1 text-sm"
-              max={endDate || undefined}
-            />
-          </div>
-          <div>
-            <label htmlFor="endDate" className="mr-2 text-sm font-medium text-gray-700">
-              To:
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded-md p-1 text-sm"
-              min={startDate || undefined}
-            />
-          </div>
-          {(startDate || endDate) && (
-            <button
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-              }}
-              className="text-sm text-gray-600 hover:text-gray-900 underline"
-            >
-              Clear Dates
-            </button>
-          )}
-        </div>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                userData.is_staff ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                              }`}
+                            >
+                              {userData.is_staff ? 'Staff' : 'User'}
+                            </span>
+                          </td>
 
-        {/* Log Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Username</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Organization</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
-                <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Company Name</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {purchaseLogs.length > 0 ? (
-                purchaseLogs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap">{log.username}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      {`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap">{log.organization || '-'}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{log.job_title || '-'}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{log.company_name || '-'}</td>
-                  </tr>
-                ))
-              ) : (
-                !logLoading && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-4 text-center text-gray-500">
-                      No logs found for the selected period.
-                    </td>
-                  </tr>
-                )
+                          {/* Joined column */}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {fmtDate(userData.date_joined)}
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                            <button
+                              onClick={() => handleUserClick(userData)}
+                              className="text-blue-600 hover:text-blue-900 hover:underline"
+                            >
+                              Edit Assignments
+                            </button>
+                          </td>
+
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {!userData.is_staff && (
+                              <button
+                                onClick={() => handleDeleteUser(userData.id, userData.username)}
+                                className="text-red-600 hover:text-red-900 hover:underline"
+                              >
+                                Remove User
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* LOGS PANEL */}
+        {tab === 'logs' && (
+          <div role="tabpanel" className="p-6">
+            <h3 className="text-xl font-semibold mb-4">User Purchase Log</h3>
+
+            {/* Filters */}
+            <div className="mb-4 flex flex-wrap items-center gap-4">
+              <div>
+                <label htmlFor="startDate" className="mr-2 text-sm font-medium text-gray-700">
+                  From:
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-300 rounded-md p-1 text-sm"
+                  max={endDate || undefined}
+                />
+              </div>
+              <div>
+                <label htmlFor="endDate" className="mr-2 text-sm font-medium text-gray-700">
+                  To:
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-300 rounded-md p-1 text-sm"
+                  min={startDate || undefined}
+                />
+              </div>
+              {(startDate || endDate) && (
+                <button
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  className="text-sm text-gray-600 hover:text-gray-900 underline"
+                >
+                  Clear Dates
+                </button>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
 
-        {/* Infinite scroll trigger / status */}
-        <div ref={loadMoreRef} className="h-10 text-center py-4">
-          {logLoading && !isInitialLoad && <p className="text-gray-600">Loading more logs...</p>}
-          {logError && <p className="text-red-600">Error: {logError}</p>}
-          {!hasMoreLogs && purchaseLogs.length > 0 && <p className="text-gray-500">----End of logs----</p>}
-          {logLoading && isInitialLoad && <p className="text-gray-600">Loading initial logs...</p>}
-        </div>
+            {/* Log Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Company Name</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {purchaseLogs.length > 0 ? (
+                    purchaseLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">{log.username}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">
+                          {`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap">{log.organization || '-'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{log.job_title || '-'}</td>
+                        <td className="px-4 py-2 whitespace-nowrap">{log.company_name || '-'}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    !logLoading && (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-4 text-center text-gray-500">
+                          No logs found for the selected period.
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Infinite scroll trigger / status */}
+            <div ref={loadMoreRef} className="h-10 text-center py-4">
+              {logLoading && !isInitialLoad && <p className="text-gray-600">Loading more logs...</p>}
+              {logError && <p className="text-red-600">Error: {logError}</p>}
+              {!hasMoreLogs && purchaseLogs.length > 0 && <p className="text-gray-500">----End of logs----</p>}
+              {logLoading && isInitialLoad && <p className="text-gray-600">Loading initial logs...</p>}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
