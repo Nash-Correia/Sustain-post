@@ -155,6 +155,29 @@ class CompanyListSerializer(serializers.ModelSerializer):
         ]
 
 class PurchaseLogSerializer(serializers.ModelSerializer):
+    # Pull user details from the related CustomUser model
+    username = serializers.CharField(source='user.username', read_only=True)
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    organization = serializers.CharField(source='user.organization', read_only=True)
+    job_title = serializers.CharField(source='user.job_title', read_only=True)
+
+    class Meta:
+        model = PurchaseLog
+        fields = (
+            'id',
+            'user', # This will be the user's ID
+            'username',
+            'first_name',
+            'last_name',
+            'organization',
+            'job_title',
+            'company_name',
+            'timestamp'
+            # user_id_recorded is now gone
+        )
+        # All fields are effectively read-only as they are sourced from the relation
+        read_only_fields = fields
     # Optionally display username instead of just user ID
     username = serializers.CharField(source='user.username', read_only=True)
 

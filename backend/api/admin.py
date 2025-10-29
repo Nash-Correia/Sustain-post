@@ -227,6 +227,48 @@ admin.site.index_title = "Welcome to IiAS ESG Platform Administration"
 class PurchaseLogAdmin(admin.ModelAdmin):
     list_display = (
         'user',
+        'get_user_first_name', # Use a method to get related field
+        'get_user_last_name',
+        'get_user_organization',
+        'get_user_job_title',
+        'company_name',
+        'timestamp'
+    )
+    list_filter = (
+        ('timestamp', DateFieldListFilter),
+        'user',
+        'user__organization', # Filter on the related field
+        'user__job_title',    # Filter on the related field
+        'company_name',
+    )
+    search_fields = (
+        'user__username',
+        'user__first_name',
+        'user__last_name',
+        'user__organization',
+        'user__job_title',
+        'company_name',
+    )
+    readonly_fields = ('user', 'timestamp', 'company_name')
+    
+    # Methods to display related user data
+    @admin.display(description='First Name', ordering='user__first_name')
+    def get_user_first_name(self, obj):
+        return obj.user.first_name if obj.user else None
+
+    @admin.display(description='Last Name', ordering='user__last_name')
+    def get_user_last_name(self, obj):
+        return obj.user.last_name if obj.user else None
+
+    @admin.display(description='Organization', ordering='user__organization')
+    def get_user_organization(self, obj):
+        return obj.user.organization if obj.user else None
+
+    @admin.display(description='Job Title', ordering='user__job_title')
+    def get_user_job_title(self, obj):
+        return obj.user.job_title if obj.user else None
+    list_display = (
+        'user',
         'first_name',
         'last_name',
         'organization',

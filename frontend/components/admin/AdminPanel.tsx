@@ -238,7 +238,7 @@ const AdminPanel: React.FC = () => {
             <div className="flex flex-col items-start justify-between gap-4 border-b border-gray-200 p-6 sm:flex-row sm:items-center">
               <button
                 onClick={() => setIsAssignModalOpen(true)}
-                className="rounded-lg bg-blue-600 px  -6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
+                className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Assign Reports
               </button>
@@ -394,44 +394,47 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Timestamp</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Username</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Name</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Organization</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Contact No.</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Email</th>
-                    <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Company Name</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {purchaseLogs.length > 0 ? (
-                    purchaseLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td className="whitespace-nowrap px-4 py-2">{new Date(log.timestamp).toLocaleString()}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.username}</td>
-                        <td className="whitespace-nowrap px-4 py-2">
-                          {`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.organization || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.contact_no || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.email || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.company_name || '-'}</td>
-                      </tr>
-                    ))
-                  ) : !logLoading ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
-                        No logs found for the selected period.
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
+                 <div className="overflow-x-auto">
+                     <table className="min-w-full divide-y divide-gray-200 text-sm">
+                         <thead className="bg-gray-50">
+                             <tr>
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Email</th> {/* ADDED */}
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Contact No.</th> {/* ADDED */}
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Organization</th>
+                                 {/* <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Job Title</th> */} {/* REMOVED */}
+                                 <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Company Name</th>
+                             </tr>
+                         </thead>
+                         <tbody className="bg-white divide-y divide-gray-200">
+                             {purchaseLogs.length > 0 ? (
+                                 purchaseLogs.map((log) => (
+                                     <tr key={log.id}>
+                                         <td className="px-4 py-2 whitespace-nowrap">{new Date(log.timestamp).toLocaleString()}</td>
+                                         <td className="px-4 py-2 whitespace-nowrap">{log.username}</td>
+                                         <td className="px-4 py-2 whitespace-nowrap">{`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}</td>
+                                         <td className="px-4 py-2 whitespace-nowrap">{log.email || '-'}</td> {/* ADDED */}
+                                         <td className="px-4 py-2 whitespace-nowrap">{log.phone_number || '-'}</td> {/* ADDED */}
+                                         <td className="px-4 py-2 whitespace-nowrap">{log.organization || '-'}</td>
+                                         {/* <td className="px-4 py-2 whitespace-nowrap">{log.job_title || '-'}</td> */} {/* REMOVED */}
+                                         <td className="px-4 py-2 whitespace-nowrap">{log.company_name || '-'}</td>
+                                     </tr>
+                                 ))
+                             ) : (
+                                 !logLoading && (
+                                     <tr>
+                                         {/* Updated colSpan to 7 */}
+                                         <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
+                                             No logs found for the selected period.
+                                         </td>
+                                     </tr>
+                                 )
+                             )}
+                         </tbody>
+                     </table>
+                 </div>
 
             {/* Infinite scroll status */}
             <div ref={loadMoreRef} className="h-10 py-4 text-center">

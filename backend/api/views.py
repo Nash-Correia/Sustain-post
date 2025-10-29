@@ -826,30 +826,24 @@ def log_purchase(request):
     Expects 'company_name' in the request body.
     """
     user = request.user
-    company_name = request.data.get('company_name', '') # Get company_name from request body
-    contact_no = request.data.get('phone_number', '')  # NEW: accept from client if provided
-    email = user.email or request.data.get('email') 
-    # Basic validation: ensure company name is provided
+    company_name = request.data.get('company_name', '')
+
     if not company_name:
          return Response({"error": "Company name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
+        # Only save the non-redundant data
         PurchaseLog.objects.create(
             user=user,
-            user_id_recorded=user.id,
-            first_name=user.first_name or '',
-            last_name=user.last_name or '',
-            organization=getattr(user, 'organization', '') or '',
-            job_title=getattr(user, 'job_title', '') or '',
-            contact_no=contact_no,      # NEW
-            email=email,                # NEW
-            company_name=company_name # Save the company name
+            company_name=company_name
+            # All other fields (first_name, etc.) are removed
         )
         return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
     except Exception as e:
         print(f"Error logging purchase for user {user.username}, company {company_name}: {e}")
         return Response({"error": "Failed to log purchase."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# MODIFIED PurchaseLogFilter
 class PurchaseLogFilter(django_filters.FilterSet):
     # Define filters - allow filtering by date range
     start_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='gte')
