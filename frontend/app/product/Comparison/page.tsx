@@ -9,12 +9,12 @@ import {
   FundDataRow,
   PortfolioCompany,
 } from "@/lib/excel-data";
-import TabbedSearch from "@/components/product/comparision/TabbedSearch";
-import FundsComparisonTable from "@/components/product/comparision/CustomComparisonTable";
-import FundDetails from "@/components/product/comparision/details/FundDetails";
-import SectorDetails from "@/components/product/comparision/details/SectorDetails";
-import CompanyDetails from "@/components/product/comparision/details/CompanyDetails";
-import AnalysisCard from "@/components/product/comparision/PeerAnalysisCard";
+import TabbedSearch from "@/components/product/comparison/TabbedSearch";
+import FundsComparisonTable from "@/components/product/comparison/CustomComparisonTable";
+import FundDetails from "@/components/product/comparison/details/FundDetails";
+import SectorDetails from "@/components/product/comparison/details/SectorDetails";
+import CompanyDetails from "@/components/product/comparison/details/CompanyDetails";
+import AnalysisCard from "@/components/product/comparison/PeerAnalysisCard";
 
 
 type SelectedItem =
