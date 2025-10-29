@@ -117,8 +117,10 @@ export default function SampleReport() {
                     Download
                   </a>
                   <button
+                    type="button"
                     onClick={() => setIsModalOpen(false)}
                     className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                    title="Close modal"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

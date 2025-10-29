@@ -16,8 +16,9 @@ import SectorDetails from "@/components/product/comparision/details/SectorDetail
 import CompanyDetails from "@/components/product/comparision/details/CompanyDetails";
 import AnalysisCard from "@/components/product/comparision/PeerAnalysisCard";
 
+
 type SelectedItem =
-  | { name: string; type: "Funds" | "Sectors" | "Companies" }
+| { name: string; type: "Funds" | "Sectors" | "Companies" }
   | null;
 
 /* =========================
