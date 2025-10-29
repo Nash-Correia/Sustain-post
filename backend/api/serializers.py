@@ -163,7 +163,7 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'user', # Foreign Key ID
-            'username', # Added for readability
+            'username', 
             'user_id_recorded',
             'first_name',
             'last_name',
@@ -171,6 +171,8 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
             'job_title',
             'timestamp',
             'company_name',
+            'contact_no',      
+            'email', 
             # 'company_isin', # Optional
         )
         read_only_fields = fields # Make all fields read-only in this context

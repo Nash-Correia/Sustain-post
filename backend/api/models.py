@@ -246,6 +246,8 @@ class PurchaseLog(models.Model):
     company_name = models.CharField(max_length=255, blank=True, help_text="Name of the company report purchased/requested")
     # Consider adding info about *what* was purchased if needed (e.g., company ISIN)
     # company_isin = models.CharField(max_length=50, blank=True)
+    contact_no = models.CharField(max_length=32, blank=True, default='')
+    email = models.EmailField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

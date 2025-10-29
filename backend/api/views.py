@@ -827,7 +827,8 @@ def log_purchase(request):
     """
     user = request.user
     company_name = request.data.get('company_name', '') # Get company_name from request body
-
+    contact_no = request.data.get('contact_no', '')  # NEW: accept from client if provided
+    email = user.email or request.data.get('email') 
     # Basic validation: ensure company name is provided
     if not company_name:
          return Response({"error": "Company name is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -840,6 +841,8 @@ def log_purchase(request):
             last_name=user.last_name or '',
             organization=getattr(user, 'organization', '') or '',
             job_title=getattr(user, 'job_title', '') or '',
+            contact_no=contact_no,      # NEW
+            email=email,                # NEW
             company_name=company_name # Save the company name
         )
         return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
