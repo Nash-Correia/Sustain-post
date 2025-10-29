@@ -827,7 +827,7 @@ def log_purchase(request):
     """
     user = request.user
     company_name = request.data.get('company_name', '') # Get company_name from request body
-    contact_no = request.data.get('contact_no', '')  # NEW: accept from client if provided
+    contact_no = request.data.get('phone_number', '')  # NEW: accept from client if provided
     email = user.email or request.data.get('email') 
     # Basic validation: ensure company name is provided
     if not company_name:
