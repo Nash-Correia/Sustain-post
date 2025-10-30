@@ -22,6 +22,11 @@ from datetime import timedelta
 from django_filters.rest_framework import DjangoFilterBackend # For filtering
 import django_filters # For creating filterset
 
+from rest_framework import generics, filters as drf_filters
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+
+
 import os
 import pandas as pd
 
@@ -852,6 +857,11 @@ def log_purchase(request):
 
 # MODIFIED PurchaseLogFilter
 class PurchaseLogFilter(django_filters.FilterSet):
+    # Filter non-model fields via the relation
+    email         = django_filters.CharFilter(field_name='user__email', lookup_expr='icontains')
+    phone_number  = django_filters.CharFilter(field_name='user__phone_number', lookup_expr='icontains')
+    organization  = django_filters.CharFilter(field_name='user__organization', lookup_expr='icontains')
+
     # Define filters - allow filtering by date range
     start_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='gte')
     end_date = django_filters.DateTimeFilter(field_name="timestamp", lookup_expr='lte')
@@ -861,7 +871,8 @@ class PurchaseLogFilter(django_filters.FilterSet):
     class Meta:
         model = PurchaseLog
         #fields = ['user', 'organization', 'phone_number','email', 'start_date', 'end_date'] # Add other fields if needed
-        fields = ['user', 'organization', 'phone_number','email'] # Add other fields if needed
+        #fields = ['user', 'organization', 'phone_number','email'] # Add other fields if needed
+        fields = ['user'] # Add other fields if needed
 
     # def filter_last_n_days(self, queryset, name, value):
     #     if value:
@@ -874,17 +885,23 @@ class PurchaseLogFilter(django_filters.FilterSet):
     #             pass # Ignore invalid number
     #     return queryset
     
-class AdminPurchaseLogListView(generics.ListAPIView):
-    """
-    API view for admins to list purchase logs.
-    Supports filtering by date range and last N days.
-    """
-    queryset = PurchaseLog.objects.all().select_related('user') # Optimize query
-    serializer_class = PurchaseLogSerializer
-    permission_classes = [IsAdminUser] # IMPORTANT: Only allow admin users
-    filter_backends = [DjangoFilterBackend] # Enable DjangoFilterBackend
-    filterset_class = PurchaseLogFilter # Use the filterset defined above
 
-    # Optional: Add ordering support if needed
-    # ordering_fields = ['timestamp', 'user__username']
-    # ordering = ['-timestamp']
+class PurchaseLogPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class AdminPurchaseLogListView(generics.ListAPIView):
+    serializer_class = PurchaseLogSerializer
+    queryset = (
+        PurchaseLog.objects.select_related('user')
+        .order_by('-timestamp')
+    )
+    pagination_class = PurchaseLogPagination
+
+    filter_backends = [DjangoFilterBackend, drf_filters.OrderingFilter]
+    filterset_class = PurchaseLogFilter
+    ordering_fields = ['timestamp']
+
+
+

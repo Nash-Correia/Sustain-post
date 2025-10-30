@@ -164,7 +164,7 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     user_id_recorded = serializers.IntegerField(source='user.id', read_only=True)
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
-    company_name = serializers.CharField('company_name', read_only=True)
+    #company_name = serializers.CharField('company_name', read_only=True)
     # company_isin = serializers.CharField(source='company.isin', read_only=True)
 
 
