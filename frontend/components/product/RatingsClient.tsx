@@ -1,7 +1,7 @@
 // components/product/RatingsClient.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef, useCallback,RefObject } from "react";
 import RatingTable, { type RatingRow } from "@/components/product/RatingTable";
 import { LOGIN, SHOW_TABS_FOR_EMPTY_USER } from "@/lib/feature-flags";
 import { companyAPI, type CompanyListItem, type MyReportItem } from "@/lib/auth";
@@ -9,7 +9,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import RequestReportModal from "./RequestReportModal";
 
 /**
- * Enhanced RatingsClient with backend integration for real report ownership tracking
+ * Enhanced RatingsClient with infinite scroll loading
  */
 
 // Grade ordering helper for sorting (A+ best → D worst)
@@ -18,125 +18,125 @@ const gradeRank = (g: string) => {
   const i = GRADE_ORDER.indexOf(g?.toUpperCase?.() ?? "");
   return i === -1 ? Number.POSITIVE_INFINITY : i;
 };
-   
-// Pagination (increased for scroll view)
-const PAGE_SIZE = 50; // Show more rows before pagination kicks in
+
+// Increased page size for better UX with infinite scroll
+const PAGE_SIZE = 30;
 
 export default function RatingsClient({ initial = [] as RatingRow[] }) {
-  // Auth context for user information
   const { user, isAuthenticated } = useAuth();
   
-  // Raw, fully-loaded rows (from backend)
-  const [allRows, setAllRows] = useState<RatingRow[]>(initial);
+  // Data states
+  const [allRows, setAllRows] = useState<RatingRow[]>([]);
   const [myReports, setMyReports] = useState<MyReportItem[]>([]);
-
-  // Loading state
+  const [displayedRows, setDisplayedRows] = useState<RatingRow[]>([]);
+  
+  // Loading states
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Column filter states
+  // Filter states
   const [filterCompanies, setFilterCompanies] = useState<string[]>([]);
   const [filterSectors, setFilterSectors] = useState<string[]>([]);
-
-  // Rating sort state: "asc" | "desc" | null
   const [sortRating, setSortRating] = useState<"asc" | "desc" | null>(null);
-
-  // Year filter (dropdown)
   const [filterYear, setFilterYear] = useState<number>(2024);
   const yearOptions = [2024, 2023];
 
   // Pagination
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Tab state (only shown when showTabs === true)
+  // Tab state
   type TabKey = "all" | "mine";
   const [tab, setTab] = useState<TabKey>("all");
 
-  // Inbuilt PDF viewer modal state
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
-  const [viewerTitle, setViewerTitle] = useState<string>("");
-
-  // Request Report modal state
+  // Modals
   const [reqOpen, setReqOpen] = useState(false);
   const [reqDefaultCompany, setReqDefaultCompany] = useState<string | undefined>(undefined);
 
-  // ===== Load companies from backend API =====
+  // Refs for infinite scroll
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // ===== Load initial data =====
   useEffect(() => {
     let cancelled = false;
+    
     (async () => {
       setLoading(true);
+      setIsInitialLoad(true);
+      
       try {
         console.log('🔄 Loading companies from backend API...');
         
-        // Load all available companies from backend
         const companies: CompanyListItem[] = await companyAPI.getAllCompanies();
         console.log('✅ Companies loaded:', companies?.length, 'companies');
         
-        // Convert to RatingRow format
         const ratingRows: RatingRow[] = companies
           .filter((c) => !!c.company_name && !!c.esg_rating)
           .map((c) => ({
             company: c.company_name,
             sector: c.sector || "—",
             rating: c.esg_rating || "—",
-            year: 2024, // Default year for company ratings
-            reportUrl: "#", // Will trigger download request
-            isin: c.isin, // Add ISIN for identification
+            year: 2024,
+            reportUrl: "#",
+            isin: c.isin,
           }));
 
-        console.log('✅ Rating rows created:', ratingRows?.length, 'rows');
-        if (!cancelled) setAllRows(ratingRows);
+        if (!cancelled) {
+          setAllRows(ratingRows);
+          console.log('✅ Rating rows created:', ratingRows?.length, 'rows');
+        }
         
-        // Load user's assigned companies if authenticated
         if (isAuthenticated) {
           try {
             const userCompanies: MyReportItem[] = await companyAPI.getMyReports();
-            if (!cancelled) setMyReports(userCompanies);
-            console.log('✅ My reports loaded:', userCompanies?.length, 'reports');
+            if (!cancelled) {
+              setMyReports(userCompanies);
+              console.log('✅ My reports loaded:', userCompanies?.length, 'reports');
+            }
           } catch (error) {
             console.warn('Could not load my reports:', error);
           }
         }
       } catch (e) {
-        console.error("❌ Failed loading companies from backend:", e);
-        console.error("Error details:", {
-          message: (e as Error)?.message,
-          stack: (e as Error)?.stack,
-          name: (e as Error)?.name
-        });
-        // Fallback to initial data if provided
+        console.error("❌ Failed loading companies:", e);
         if (!cancelled && initial?.length) {
           setAllRows(initial);
-          console.log('📋 Using fallback initial data:', initial.length, 'rows');
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setIsInitialLoad(false);
+        }
       }
     })();
+    
     return () => {
       cancelled = true;
     };
   }, [initial, isAuthenticated]);
 
-  // ----- My reports (from backend assigned companies) -----
+  // ===== My reports transformation =====
   const myRows = useMemo<RatingRow[]>(() => {
     return myReports.map((mr): RatingRow => ({
       company: mr.company_name,
       sector: mr.sector || "—",
       rating: mr.esg_rating || "—",
-      year: 2024, // Default year for assigned companies
-      reportUrl: mr.download_url || "#", // Secure download URL from backend
+      year: 2024,
+      reportUrl: mr.download_url || "#",
       isin: mr.isin,
-      reportFilename: mr.report_filename, // Add filename for display
+      reportFilename: mr.report_filename,
     }));
   }, [myReports]);
 
-  // Show tabs if login enabled and (user has reports OR testing flag is on)
+  // Show tabs logic
   const showTabs = LOGIN && (SHOW_TABS_FOR_EMPTY_USER || myRows.length > 0);
 
-  // ===== Base rows depend on active tab =====
+  // ===== Base rows based on tab =====
   const baseRows = tab === "mine" ? myRows : allRows;
 
-  // ===== Derived option lists (Company, Sector) from baseRows =====
+  // ===== Options for filters =====
   const companyOptions = useMemo(() => {
     const set = new Set<string>();
     baseRows.forEach((r) => set.add(r.company));
@@ -149,7 +149,7 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [baseRows]);
 
-  // ===== Filtering & Sorting =====
+  // ===== Filtered & sorted rows =====
   const filteredRows = useMemo(() => {
     let filtered = baseRows.filter((r) => {
       if (filterCompanies.length && !filterCompanies.includes(r.company)) return false;
@@ -158,7 +158,6 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
       return true;
     });
 
-    // Sort by rating if requested
     if (sortRating) {
       filtered = filtered.sort((a, b) => {
         const aRank = gradeRank(a.rating);
@@ -170,25 +169,67 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
     return filtered;
   }, [baseRows, filterCompanies, filterSectors, filterYear, sortRating]);
 
-  // Reset to page 1 when filters change
+  // ===== Load more functionality =====
+  const loadMoreRows = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+
+    const startIdx = currentPage * PAGE_SIZE;
+    const endIdx = startIdx + PAGE_SIZE;
+    const moreRows = filteredRows.slice(startIdx, endIdx);
+
+    if (moreRows.length === 0) {
+      setHasMore(false);
+      return;
+    }
+
+    setLoadingMore(true);
+    
+    // Simulate async loading for smooth UX
+    setTimeout(() => {
+      setDisplayedRows((prev) => [...prev, ...moreRows]);
+      setCurrentPage((prev) => prev + 1);
+      setHasMore(endIdx < filteredRows.length);
+      setLoadingMore(false);
+    }, 300);
+  }, [currentPage, filteredRows, loadingMore, hasMore]);
+
+  // ===== Reset when filters change =====
   useEffect(() => {
-    setPage(1);
-  }, [filterCompanies, filterSectors, filterYear, sortRating, tab]);
+    setCurrentPage(1);
+    setHasMore(true);
+    setDisplayedRows(filteredRows.slice(0, PAGE_SIZE));
+  }, [filterCompanies, filterSectors, filterYear, sortRating, tab, filteredRows]);
 
-  // ===== Pagination slice =====
-  const pages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-  const pageRows = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return filteredRows.slice(start, start + PAGE_SIZE);
-  }, [filteredRows, page]);
+  // ===== Intersection Observer for infinite scroll =====
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loadingMore && !isInitialLoad) {
+          loadMoreRows();
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-  // ===== Ownership helpers =====
+    const node = loadMoreRef.current;
+    if (node) {
+      observerRef.current.observe(node);
+    }
+
+    return () => {
+      if (node) {
+        observerRef.current?.unobserve(node);
+      }
+      observerRef.current?.disconnect();
+    };
+  }, [hasMore, loadingMore, isInitialLoad, loadMoreRows]);
+
+  // ===== Helpers =====
   const hasReport = (company: string, year: number) => {
-    // Check if user has this company assigned in My Reports
     return myReports.some(mr => mr.company_name === company);
   };
 
-  // ===== Actions =====
   function handleRequest(company: string) {
     if (!LOGIN) return;
     setReqDefaultCompany(company);
@@ -196,20 +237,17 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
   }
 
   function handleShow(row: RatingRow) {
-    // For My Reports, show company details instead of PDF
     if (tab === "mine") {
       alert(`Company Details:\nName: ${row.company}\nSector: ${row.sector}\nESG Rating: ${row.rating}\nISIN: ${row.isin || 'N/A'}`);
       return;
     }
-    
-    // For All Reports, this shouldn't happen as they should all be "Download" buttons
     alert("This report requires a download request. Please click Download to request access.");
   }
 
   // ===== Render =====
   return (
     <section className="w-full">
-      {/* Fixed header container */}
+      {/* Tabs */}
       <div className="bg-white">
         {showTabs && (
           <div className="mb-0">
@@ -226,33 +264,40 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
       </div>
 
       <div className={`${showTabs ? 'rounded-t-none' : 'rounded-lg'} border border-gray-200`}>
-        <RatingTable
-          rows={pageRows}
-          page={page}
-          pages={pages}
-          onPage={setPage}
-          companyOptions={companyOptions}
-          sectorOptions={sectorOptions}
-          filterCompanies={filterCompanies}
-          onFilterCompanies={setFilterCompanies}
-          filterSectors={filterSectors}
-          onFilterSectors={setFilterSectors}
-          sortRating={sortRating}
-          onSortRating={setSortRating}
-          filterYear={filterYear}
-          onFilterYear={setFilterYear}
-          yearOptions={yearOptions}
-          onRequest={handleRequest}
-          isLoggedIn={LOGIN}
-          hasReport={hasReport}
-          onShow={handleShow}
-          mode={tab}
-          scrollView={true}
-          showTabs={showTabs}
-        />
+        {loading && isInitialLoad ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-teal-600" />
+            <span className="ml-3 text-gray-600">Loading companies...</span>
+          </div>
+        ) : (
+          <RatingTable
+            rows={displayedRows}
+            companyOptions={companyOptions}
+            sectorOptions={sectorOptions}
+            filterCompanies={filterCompanies}
+            onFilterCompanies={setFilterCompanies}
+            filterSectors={filterSectors}
+            onFilterSectors={setFilterSectors}
+            sortRating={sortRating}
+            onSortRating={setSortRating}
+            filterYear={filterYear}
+            onFilterYear={setFilterYear}
+            yearOptions={yearOptions}
+            onRequest={handleRequest}
+            isLoggedIn={LOGIN}
+            hasReport={hasReport}
+            onShow={handleShow}
+            mode={tab}
+            showTabs={showTabs}
+            infiniteScroll={true}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            loadMoreRef={loadMoreRef as RefObject<HTMLDivElement>}
+          />
+        )}
       </div>
 
-      {/* Request modal */}
+      {/* Modals */}
       <RequestReportModal
         open={reqOpen}
         onClose={() => setReqOpen(false)}
@@ -261,15 +306,6 @@ export default function RatingsClient({ initial = [] as RatingRow[] }) {
         loggedIn={LOGIN}
         companyOptions={companyOptions}
       />
-
-      {/* Inbuilt PDF/report viewer */}
-      {viewerUrl && (
-        <ReportViewerModal
-          title={viewerTitle}
-          url={viewerUrl}
-          onClose={() => setViewerUrl(null)}
-        />
-      )}
     </section>
   );
 }
@@ -299,38 +335,5 @@ function TabButton({
     >
       {children}
     </button>
-  );
-}
-
-function ReportViewerModal({
-  title,
-  url,
-  onClose,
-}: {
-  title: string;
-  url: string;
-  onClose: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-11/12 h-5/6 flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-xl"
-          >
-            ×
-          </button>
-        </div>
-        <div className="flex-1 p-4">
-          <iframe
-            src={url}
-            className="w-full h-full border rounded"
-            title="Report Viewer"
-          />
-        </div>
-      </div>
-    </div>
   );
 }

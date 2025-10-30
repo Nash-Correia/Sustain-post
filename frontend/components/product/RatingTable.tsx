@@ -2,84 +2,58 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { companyAPI, authService } from "@/lib/auth";
+import { authService } from "@/lib/auth";
 import PDFViewer from "@/components/PDFViewer";
-
-/**
- * RatingTable — filters + pagination with safe defaults
- * Enhancements:
- * - Company/Sector: multi-select dropdowns with search & checkboxes
- * - Rating: sort toggle (asc/desc/off) — no helper text beside the label
- * - Year: simple dropdown (unchanged)
- * - Top padding added
- * - Action column now shows:
- *    • "Show"  if user owns/has downloaded the report (opens inbuilt viewer via onShow)
- *    • "Download" if logged in but does not own
- *    • disabled "Download" if logged out
- */
 
 export type RatingRow = {
   company: string;
   sector: string;
-  rating: string; // e.g., A+, B, C+
-  year: number;   // 2024, 2023
+  rating: string;
+  year: number;
   reportUrl?: string;
-  isin?: string;  // ISIN identifier for the company
-  reportFilename?: string; // PDF filename for reports
+  isin?: string;
+  reportFilename?: string;
 };
 
 type SortOrder = "asc" | "desc" | null;
 
 type Props = {
-  // Data (already filtered & paginated by parent)
   rows: RatingRow[];
-  page: number;
-  pages: number;
-  onPage: (p: number) => void;
-
-  // Company filter (multi)
+  
+  // Filters
   companyOptions?: string[];
   filterCompanies?: string[];
   onFilterCompanies?: (values: string[]) => void;
-
-  // Sector filter (multi)
   sectorOptions?: string[];
   filterSectors?: string[];
   onFilterSectors?: (values: string[]) => void;
-
-  // Rating sort
   sortRating?: SortOrder;
   onSortRating?: (order: SortOrder) => void;
-
-  // Year (unchanged single-select)
   filterYear: number;
   onFilterYear: (v: number) => void;
   yearOptions: number[];
-
+  
   // Actions
   onRequest: (company: string) => void;
-
-  // Auth + ownership
   isLoggedIn?: boolean;
   hasReport?: (company: string, year: number) => boolean;
   onShow?: (row: RatingRow) => void;
   
-  // Mode: "all" for All Reports (Download buttons), "mine" for My Reports (Show buttons)
+  // Display mode
   mode?: "all" | "mine";
-  
-  // Enable scroll view instead of pagination
-  scrollView?: boolean;
-  
-  // Whether tabs are shown (affects header styling)
   showTabs?: boolean;
+  
+  // Infinite scroll
+  infiniteScroll?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
+  loadMoreRef?: React.RefObject<HTMLDivElement>;
 };
 
-// Fixed page size + row height (keeps footer/pager from moving)
-const PAGE_SIZE = 10;
-const ROW_H = "h-12"; // ~48px per row
+const ROW_H = "h-12";
 
 export default function RatingTable(p: Props) {
-  // --------- Null-safe fallbacks to avoid runtime crashes ----------
+  // Null-safe fallbacks
   const companyOptions = p.companyOptions ?? [];
   const sectorOptions = p.sectorOptions ?? [];
   const filterCompanies = p.filterCompanies ?? [];
@@ -92,224 +66,217 @@ export default function RatingTable(p: Props) {
   const hasReport = p.hasReport ?? (() => false);
   const onShow = p.onShow ?? (() => {});
   const mode = p.mode ?? "all";
-  const scrollView = p.scrollView ?? false;
   const showTabs = p.showTabs ?? false;
-  // ----------------------------------------------------------------
+  const infiniteScroll = p.infiniteScroll ?? true;
+  const loadingMore = p.loadingMore ?? false;
+  const hasMore = p.hasMore ?? false;
 
   // PDF Viewer state
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string>('');
 
-  const fillerCount = Math.max(0, PAGE_SIZE - (p.rows?.length ?? 0));
-
   function toggleRatingSort() {
-    // Cycle: null -> asc -> desc -> null
     if (sortRating === null) return onSortRating("asc");
     if (sortRating === "asc") return onSortRating("desc");
     return onSortRating(null);
   }
 
   function handleSecureDownload(companyName: string) {
-    // Open PDF viewer instead of directly downloading
     setSelectedCompanyName(companyName);
     setPdfViewerOpen(true);
   }
 
-return (
-  <div className="pt-0">
-    <div className={`${showTabs ? 'rounded-t-none border-t-0' : 'rounded-t-[14px]'} rounded-b-[14px] border border-gray-300 bg-white shadow-sm`}>
-      {/* ====================== FIXED TABLE HEADER ====================== */}
-      <div className={`grid ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} items-center px-4 sm:px-6 h-14 ${showTabs ? 'rounded-none border-t-0' : 'rounded-t-[14px]'} border-b border-gray-200 text-[15px] font-semibold text-[#1C6C6C] bg-white z-20 relative`}>
-        {/* Company (multi-select) - Wider for company names */}
-        <div className="relative">
-          <MultiSelectDropdown
-            label="Company"
-            options={companyOptions}
-            selected={filterCompanies}
-            onChange={onFilterCompanies}
-            placeholder="Search companies..."
-          />
-        </div>
+  const handlePurchaseClick = async (companyIsin: string, companyName: string) => {
+    console.log(`Purchase initiated for ${companyName}`);
+    try {
+      const token = authService.getAccessToken();
+      if (!token) {
+        console.error("User not authenticated");
+        return false;
+      }
 
-        {/* Sector (multi-select) - Medium width */}
-        <div className="relative flex items-center justify-center">
-          <MultiSelectDropdown
-            label="ESG Sector"
-            options={sectorOptions}
-            selected={filterSectors}
-            onChange={onFilterSectors}
-            placeholder="Search sectors..."
-            center
-          />
-        </div>
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/log-purchase/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ company_name: companyName }),
+      });
 
-        {/* Rating (sort asc/desc) - Compact */}
-        <div className="relative flex items-center justify-center">
-          <button
-            type="button"
-            onClick={toggleRatingSort}
-            aria-pressed={!!sortRating}
-            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[#195D5D] hover:bg-gray-50"
-            title="Toggle rating sort"
-          >
-            <span>ESG Rating</span>
-            {sortRating === "asc" ? (
-              <SortUp className="h-4 w-4 text-gray-400" />
-            ) : sortRating === "desc" ? (
-              <SortDown className="h-4 w-4 text-gray-400" />
-            ) : (
-              <SortBoth className="h-4 w-4 text-gray-400" />
-            )}
-          </button>
-        </div>
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to log purchase:", errorData.error);
+        return false;
+      }
+      
+      console.log("Purchase logged successfully");
+      return true;
+    } catch (error) {
+      console.error("Error logging purchase:", error);
+      return false;
+    }
+  };
 
-        {/* Year/Action - Compact */}
-        <div className="relative flex items-center justify-center">
-          <HeaderDropdown label={`${p.filterYear} Report`} chevron center>
-            <MenuList align="right">
-              {p.yearOptions.map((y) => (
-                <MenuItem key={y} selected={p.filterYear === y} onClick={() => p.onFilterYear(y)}>
-                  {y} Report
-                </MenuItem>
-              ))}
-            </MenuList>
-          </HeaderDropdown>
-        </div>
-      </div>
+  return (
+    <div className="pt-0">
+      <div className={`${showTabs ? 'rounded-t-none border-t-0' : 'rounded-t-[14px]'} rounded-b-[14px] border border-gray-300 bg-white shadow-sm`}>
+        {/* ====================== FIXED TABLE HEADER ====================== */}
+        <div className={`grid grid-cols-[2.5fr_1.5fr_1fr_1fr] items-center px-4 sm:px-6 h-14 ${showTabs ? 'rounded-none border-t-0' : 'rounded-t-[14px]'} border-b border-gray-200 text-[15px] font-semibold text-[#1C6C6C] bg-white z-20 relative`}>
+          {/* Company */}
+          <div className="relative">
+            <MultiSelectDropdown
+              label="Company"
+              options={companyOptions}
+              selected={filterCompanies}
+              onChange={onFilterCompanies}
+              placeholder="Search companies..."
+            />
+          </div>
 
-      {/* ====================== SCROLLABLE TABLE BODY ====================== */}
-      <div className="max-h-[500px] overflow-y-auto">
-        <ul className="divide-y divide-gray-200">
-        {(p.rows ?? []).map((r, i) => {
-          const owned = hasReport(r.company, r.year);
-          const reportFilename = r.reportFilename || 'No file available';
-          
-          return (
-            <li
-              key={`${r.company}-${i}`}
-              className={`grid min-w-0 ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} items-center px-4 sm:px-6 ${ROW_H}`}
+          {/* Sector */}
+          <div className="relative flex items-center justify-center">
+            <MultiSelectDropdown
+              label="ESG Sector"
+              options={sectorOptions}
+              selected={filterSectors}
+              onChange={onFilterSectors}
+              placeholder="Search sectors..."
+              center
+            />
+          </div>
+
+          {/* Rating */}
+          <div className="relative flex items-center justify-center">
+            <button
+              type="button"
+              onClick={toggleRatingSort}
+              aria-pressed={!!sortRating}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[#195D5D] hover:bg-gray-50"
+              title="Toggle rating sort"
             >
-              {/* Company Name - Left aligned with proper spacing */}
-              <div className="min-w-0 truncate text-[15px] text-gray-900 pr-4">
-                {r.company}
-              </div>
-              
-              {/* Sector - Center aligned */}
-              <div className="text-center text-[14px] text-gray-600 px-2">
-                {r.sector || '—'}
-              </div>
-              
-              {/* Rating - Center aligned, bold */}
-              <div className="text-center text-[14px] font-extrabold text-gray-900">
-                {r.rating}
-              </div>
-              
-              {/* Action Button - Center aligned */}
-              <div className="text-center">
-                {mode === "mine" ? (
-                  reportFilename && reportFilename !== 'No file available' ? (
-                    <button
-                      className="text-[14px] font-medium text-[#195D5D] hover:underline"
-                      onClick={() => handleSecureDownload(r.company)}
-                    >
-                      View
-                    </button>
-                  ) : (
-                    <span className="text-[14px] text-gray-400">No Report</span>
-                  )
-                ) : isLoggedIn ? (
-                  <button
-                    className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
-                    onClick={async () => {
-                      if (r.isin) {
-                        const logged = await handlePurchaseClick(r.isin, r.company);
-                        if (logged) {
-                          p.onRequest(r.company);
-                        } else {
-                          console.log("Purchase action not logged, original request cancelled.");
-                        }
-                      }
-                    }}
-                  >
-                    Purchase
-                  </button>
-                ) : (
-                  <button
-                    className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
-                    disabled
-                    title="Sign in to download"
-                  >
-                    Purchase
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
+              <span>ESG Rating</span>
+              {sortRating === "asc" ? (
+                <SortUp className="h-4 w-4 text-gray-400" />
+              ) : sortRating === "desc" ? (
+                <SortDown className="h-4 w-4 text-gray-400" />
+              ) : (
+                <SortBoth className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+          </div>
 
-        {/* Filler rows to stabilize height */}
-        {!scrollView && Array.from({ length: fillerCount }).map((_, i) => (
-          <li key={`filler-${i}`} className={`grid ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} px-4 sm:px-6 ${ROW_H}`}>
-            <div />
-            <div />
-            <div />
-            <div />
-          </li>
-        ))}
-        </ul>
-      </div>
+          {/* Year */}
+          <div className="relative flex items-center justify-center">
+            <HeaderDropdown label={`${p.filterYear} Report`} chevron center>
+              <MenuList align="right">
+                {p.yearOptions.map((y) => (
+                  <MenuItem key={y} selected={p.filterYear === y} onClick={() => p.onFilterYear(y)}>
+                    {y} Report
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </HeaderDropdown>
+          </div>
+        </div>
 
-      {/* ====================== FOOTER / PAGINATION ====================== */}
-      {!scrollView && (
-        <div className="flex items-center justify-center gap-2 px-4 h-16 border-t border-gray-200 rounded-b-[14px]">
-        <PagerButton ariaLabel="First" disabled={p.page === 1} onClick={() => p.onPage(1)}>
-          <ChevronsLeft className="h-4 w-4" />
-        </PagerButton>
-        <PagerButton ariaLabel="Prev" disabled={p.page === 1} onClick={() => p.onPage(p.page - 1)}>
-          <ChevronLeft className="h-4 w-4" />
-        </PagerButton>
+        {/* ====================== SCROLLABLE TABLE BODY ====================== */}
+        <div className="max-h-[500px] overflow-y-auto">
+          <ul className="divide-y divide-gray-200">
+            {(p.rows ?? []).map((r, i) => {
+              const reportFilename = r.reportFilename || 'No file available';
+              
+              return (
+                <li
+                  key={`${r.company}-${i}`}
+                  className={`grid min-w-0 grid-cols-[2.5fr_1.5fr_1fr_1fr] items-center px-4 sm:px-6 ${ROW_H}`}
+                >
+                  <div className="min-w-0 truncate text-[15px] text-gray-900 pr-4">
+                    {r.company}
+                  </div>
+                  
+                  <div className="text-center text-[14px] text-gray-600 px-2">
+                    {r.sector || '—'}
+                  </div>
+                  
+                  <div className="text-center text-[14px] font-extrabold text-gray-900">
+                    {r.rating}
+                  </div>
+                  
+                  <div className="text-center">
+                    {mode === "mine" ? (
+                      reportFilename && reportFilename !== 'No file available' ? (
+                        <button
+                          className="text-[14px] font-medium text-[#195D5D] hover:underline"
+                          onClick={() => handleSecureDownload(r.company)}
+                        >
+                          View
+                        </button>
+                      ) : (
+                        <span className="text-[14px] text-gray-400">No Report</span>
+                      )
+                    ) : isLoggedIn ? (
+                      <button
+                        className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
+                        onClick={async () => {
+                          if (r.isin) {
+                            const logged = await handlePurchaseClick(r.isin, r.company);
+                            if (logged) {
+                              p.onRequest(r.company);
+                            }
+                          }
+                        }}
+                      >
+                        Purchase
+                      </button>
+                    ) : (
+                      <button
+                        className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
+                        disabled
+                        title="Sign in to download"
+                      >
+                        Purchase
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
 
-        <div className="mx-2 flex items-center gap-2">
-          {makeWindow(p.page, p.pages).map((n, idx) =>
-            n === -1 ? (
-              <span key={`dots-${idx}`} className="select-none text-gray-400">
-                …
-              </span>
-            ) : (
-              <button
-                key={n}
-                onClick={() => p.onPage(n)}
-                className={
-                  n === p.page
-                    ? "h-8 w-8 rounded-full bg-gray-900 text-[13px] font-semibold text-white"
-                    : "h-8 w-8 rounded-full text-[13px] text-gray-500 hover:bg-gray-100"
-                }
-              >
-                {n}
-              </button>
-            )
+            {/* Empty state */}
+            {p.rows.length === 0 && (
+              <li className="px-4 py-12 text-center text-gray-500">
+                No companies match your filters
+              </li>
+            )}
+          </ul>
+
+          {/* Infinite scroll trigger */}
+          {infiniteScroll && (
+            <div ref={p.loadMoreRef} className="h-16 py-4 text-center">
+              {loadingMore && (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
+                  <span className="text-sm text-gray-600">Loading more...</span>
+                </div>
+              )}
+              {!hasMore && p.rows.length > 0 && (
+                <p className="text-sm text-gray-500">---- End of results ----</p>
+              )}
+            </div>
           )}
         </div>
-
-        <PagerButton ariaLabel="Next" disabled={p.page === p.pages} onClick={() => p.onPage(p.page + 1)}>
-          <ChevronRight className="h-4 w-4" />
-        </PagerButton>
-        <PagerButton ariaLabel="Last" disabled={p.page === p.pages} onClick={() => p.onPage(p.pages)}>
-          <ChevronsRight className="h-4 w-4" />
-        </PagerButton>
-        </div>
-      )}
+      </div>
+      
+      {/* PDF Viewer Modal */}
+      <PDFViewer
+        isOpen={pdfViewerOpen}
+        onClose={() => setPdfViewerOpen(false)}
+        companyName={selectedCompanyName}
+        title={`${selectedCompanyName} ESG Report`}
+      />
     </div>
-    
-    {/* PDF Viewer Modal */}
-    <PDFViewer
-      isOpen={pdfViewerOpen}
-      onClose={() => setPdfViewerOpen(false)}
-      companyName={selectedCompanyName}
-      title={`${selectedCompanyName} ESG Report`}
-    />
-  </div>
-);
+  );
 }
 
 /* ====================== MULTI-SELECT DROPDOWN ====================== */
@@ -329,16 +296,14 @@ function MultiSelectDropdown({
   placeholder?: string;
   center?: boolean;
 }) {
-  // Null-safe defaults prevent runtime crashes if parent props are undefined initially
- const safeOptions = React.useMemo(() => options ?? [], [options]);
- const safeSelected = React.useMemo(() => selected ?? [], [selected]);
+  const safeOptions = React.useMemo(() => options ?? [], [options]);
+  const safeSelected = React.useMemo(() => selected ?? [], [selected]);
   const emitChange = onChange ?? (() => {});
 
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // Click outside to close
   useEffect(() => {
     function onDoc(e: MouseEvent) {
       if (!ref.current) return;
@@ -383,7 +348,6 @@ function MultiSelectDropdown({
         <ChevronDown className="h-4 w-4 text-gray-400" />
       </button>
 
-      {/* DROPDOWN PANEL (opens below header) */}
       <div
         className={[
           "absolute top-full z-50 mt-2 min-w-[280px] rounded-xl border border-gray-200 bg-white shadow-xl",
@@ -466,7 +430,7 @@ function MultiSelectDropdown({
   );
 }
 
-/* ====================== SIMPLE DROPDOWN (YEAR) ====================== */
+/* ====================== SIMPLE DROPDOWN ====================== */
 
 function HeaderDropdown({
   label,
@@ -551,49 +515,7 @@ function MenuItem({
   );
 }
 
-/* ====================== PAGINATION PRIMITIVES ====================== */
-
-function PagerButton({
-  children,
-  disabled,
-  onClick,
-  ariaLabel,
-}: {
-  children: React.ReactNode;
-  disabled?: boolean;
-  onClick?: () => void;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      aria-label={ariaLabel}
-      disabled={disabled}
-      onClick={onClick}
-      className={[
-        "grid h-8 w-8 place-items-center rounded-lg border",
-        disabled
-          ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
-          : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function makeWindow(page: number, pages: number) {
-  const res: number[] = [];
-  const low = Math.max(2, page - 1);
-  const high = Math.min(pages - 1, page + 1);
-  res.push(1);
-  if (low > 2) res.push(-1);
-  for (let i = low; i <= high; i++) res.push(i);
-  if (high < pages - 1) res.push(-1);
-  if (pages > 1) res.push(pages);
-  return res;
-}
-
-/* ====================== INLINE ICONS (NO DEPS) ====================== */
+/* ====================== ICONS ====================== */
 
 function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -602,36 +524,7 @@ function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-function ChevronLeft(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-}
-function ChevronRight(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <path d="M9 6l6 6-6 6" />
-    </svg>
-  );
-}
-function ChevronsLeft(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <path d="M11 19l-7-7 7-7" />
-      <path d="M18 19l-7-7 7-7" />
-    </svg>
-  );
-}
-function ChevronsRight(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
-      <path d="M13 5l7 7-7 7" />
-      <path d="M6 5l7 7-7 7" />
-    </svg>
-  );
-}
+
 function SortBoth(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -640,6 +533,7 @@ function SortBoth(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
 function SortUp(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -647,6 +541,7 @@ function SortUp(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
 function SortDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -654,6 +549,7 @@ function SortDown(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -662,40 +558,3 @@ function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
-const handlePurchaseClick = async (companyIsin: string, companyName: string) => {
-  console.log(`Purchase/Request initiated for ISIN: ${companyIsin}, Company: ${companyName}`);
-  try {
-    const token = authService.getAccessToken();
-    if (!token) {
-      console.error("User not authenticated, cannot log purchase.");
-      // Consider triggering a login modal here
-      // Example: p.onLoginRequired(); // Assuming you add such a prop
-      return false; // Indicate that logging failed
-    }
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/log-purchase/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      // body: JSON.stringify({ company_isin: companyIsin }), // Optional: Send ISIN if your backend uses it
-      body: JSON.stringify({ company_name: companyName }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to log purchase:", errorData.error || response.statusText);
-      alert(`Failed to log purchase action: ${errorData.error || 'Please try again.'}`);
-      return false; // Indicate logging failed
-    } else {
-      console.log("Purchase action logged successfully.");
-      return true; // Indicate logging succeeded
-    }
-  } catch (error) {
-    console.error("Error calling log-purchase API:", error);
-    //alert("An error occurred while logging the purchase action.");
-    return false; // Indicate logging failed
-  }
-};
