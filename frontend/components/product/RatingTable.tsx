@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { authService } from "@/lib/auth";
 import PDFViewer from "@/components/PDFViewer";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 
 export type RatingRow = {
   company: string;
@@ -75,6 +76,9 @@ export default function RatingTable(p: Props) {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string>('');
 
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+
   function toggleRatingSort() {
     if (sortRating === null) return onSortRating("asc");
     if (sortRating === "asc") return onSortRating("desc");
@@ -91,6 +95,7 @@ export default function RatingTable(p: Props) {
     try {
       const token = authService.getAccessToken();
       if (!token) {
+
         console.error("User not authenticated");
         return false;
       }
@@ -230,13 +235,13 @@ export default function RatingTable(p: Props) {
                         Purchase
                       </button>
                     ) : (
-                      <button
-                        className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
-                        disabled
-                        title="Sign in to download"
-                      >
-                        Purchase
-                      </button>
+                    <button
+                      className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
+                      onClick={() => setShowLoginModal(true)}
+                    >
+                      Purchase
+                    </button>
+                      
                     )}
                   </div>
                 </li>
