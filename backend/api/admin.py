@@ -232,7 +232,7 @@ class PurchaseLogAdmin(admin.ModelAdmin):
         'get_user_organization',
         'get_user_job_title',
         'company_name',
-        'timestamp'
+        'timestamp',
     )
     list_filter = (
         ('timestamp', DateFieldListFilter),
