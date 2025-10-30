@@ -842,13 +842,13 @@ def log_purchase(request):
                 user=user,
                 user_id_recorded=user.id,
                 #username=user.username,
-                first_name=user.first_name or "",
-                last_name=user.last_name or "",
-                organization=getattr(user, "organization", "") or "",
-                job_title=getattr(user, "job_title", "") or "",
+                #first_name=user.first_name or "",
+                #last_name=user.last_name or "",
+                #organization=getattr(user, "organization", "") or "",
+                #job_title=getattr(user, "job_title", "") or "",
                 company_name=company_name,
-                phone_number=getattr(user, "phone_number", "") or "",  # ← important
-                email=user.email or "",    
+                #phone_number=getattr(user, "phone_number", "") or "",  # ← important
+                #email=user.email or "",    
         )
         return Response({"message": "Purchase logged successfully."}, status=status.HTTP_201_CREATED)
     except Exception as e:
