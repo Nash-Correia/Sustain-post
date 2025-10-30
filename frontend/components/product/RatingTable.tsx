@@ -115,202 +115,201 @@ export default function RatingTable(p: Props) {
     setPdfViewerOpen(true);
   }
 
-  return (
-    <div className="pt-0">
-      <div className={`${showTabs ? 'rounded-t-none border-t-0' : 'rounded-t-[14px]'} rounded-b-[14px] border border-gray-300 bg-white shadow-sm`}>
-        {/* ====================== FIXED TABLE HEADER ====================== */}
-        <div className={`grid ${mode === "mine" ? "grid-cols-[1.2fr_1fr_.6fr_.8fr_.6fr]" : "grid-cols-[1.2fr_1fr_.6fr_.6fr]"} items-center px-4 sm:px-6 h-14 ${showTabs ? 'rounded-none border-t-0' : 'rounded-t-[14px]'} border-b border-gray-200 text-[15px] font-semibold text-[#1C6C6C] bg-white z-20 relative`}>
-          {/* Company (multi-select) */}
-          <div className="relative">
-            <MultiSelectDropdown
-              label="Company"
-              options={companyOptions}
-              selected={filterCompanies}
-              onChange={onFilterCompanies}
-              placeholder="Search companies..."
-            />
-          </div>
-
-          {/* Sector (multi-select) */}
-          <div className="relative flex items-center justify-center">
-            <MultiSelectDropdown
-              label="ESG Sector"
-              options={sectorOptions}
-              selected={filterSectors}
-              onChange={onFilterSectors}
-              placeholder="Search sectors..."
-              center
-            />
-          </div>
-
-          {/* Rating (sort asc/desc) — no extra text beside the label */}
-          <div className="relative flex items-center justify-center">
-            <button
-              type="button"
-              onClick={toggleRatingSort}
-              aria-pressed={!!sortRating}
-              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[#195D5D] hover:bg-gray-50"
-              title="Toggle rating sort"
-            >
-              <span>ESG Rating</span>
-              {sortRating === "asc" ? (
-                <SortUp className="h-4 w-4 text-gray-400" />
-              ) : sortRating === "desc" ? (
-                <SortDown className="h-4 w-4 text-gray-400" />
-              ) : (
-                <SortBoth className="h-4 w-4 text-gray-400" />
-              )}
-            </button>
-          </div>
-
-          {/* Year (unchanged single-select) */}
-          <div className="relative flex items-center justify-center">
-            <HeaderDropdown label={`${p.filterYear} Report`} chevron center>
-              <MenuList align="right">
-                {p.yearOptions.map((y) => (
-                  <MenuItem key={y} selected={p.filterYear === y} onClick={() => p.onFilterYear(y)}>
-                    {y} Report
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </HeaderDropdown>
-          </div>
+return (
+  <div className="pt-0">
+    <div className={`${showTabs ? 'rounded-t-none border-t-0' : 'rounded-t-[14px]'} rounded-b-[14px] border border-gray-300 bg-white shadow-sm`}>
+      {/* ====================== FIXED TABLE HEADER ====================== */}
+      <div className={`grid ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} items-center px-4 sm:px-6 h-14 ${showTabs ? 'rounded-none border-t-0' : 'rounded-t-[14px]'} border-b border-gray-200 text-[15px] font-semibold text-[#1C6C6C] bg-white z-20 relative`}>
+        {/* Company (multi-select) - Wider for company names */}
+        <div className="relative">
+          <MultiSelectDropdown
+            label="Company"
+            options={companyOptions}
+            selected={filterCompanies}
+            onChange={onFilterCompanies}
+            placeholder="Search companies..."
+          />
         </div>
 
-        {/* ====================== SCROLLABLE TABLE BODY ====================== */}
-        <div className="max-h-[500px] overflow-y-auto">
-          <ul className="divide-y divide-gray-200">
-          {(p.rows ?? []).map((r, i) => {
-            const owned = hasReport(r.company, r.year);
-            // For My Reports, get reportFilename from row data
-            const reportFilename = r.reportFilename || 'No file available';
-            
-            return (
-              <li
-                key={`${r.company}-${i}`}
-                className={`grid min-w-0 ${mode === "mine" ? "grid-cols-[1.2fr_1fr_.6fr_.8fr_.6fr]" : "grid-cols-[1.2fr_1fr_.6fr_.6fr]"} items-center px-4 sm:px-6 ${ROW_H}`}
-              >
-                <div className="min-w-0 truncate text-[15px] text-gray-900">{r.company}</div>
-                <div className="text-center text-[14px] text-gray-600">{r.sector}</div>
-                <div className="text-center text-[14px] font-extrabold text-gray-900">{r.rating}</div>
-                
-                {/* File Name column (only in My Reports) */}
-                {/* {mode === "mine" && (
-                  <div className="text-center text-[13px] text-gray-700 truncate px-1">
-                    {reportFilename}
-                  </div>
-                )} */}
-                
-                <div className="text-center">
-                  {mode === "mine" ? (
-                    reportFilename && reportFilename !== 'No file available' ? (
-                      <button
-                        className="text-[14px] font-medium text-[#195D5D] hover:underline"
-                        onClick={() => handleSecureDownload(r.company)}
-                      >
-                        View
-                      </button>
-                    ) : (
-                      <span className="text-[14px] text-gray-400">No Report</span>
-                    )
-                  ) : isLoggedIn ? (
+        {/* Sector (multi-select) - Medium width */}
+        <div className="relative flex items-center justify-center">
+          <MultiSelectDropdown
+            label="ESG Sector"
+            options={sectorOptions}
+            selected={filterSectors}
+            onChange={onFilterSectors}
+            placeholder="Search sectors..."
+            center
+          />
+        </div>
+
+        {/* Rating (sort asc/desc) - Compact */}
+        <div className="relative flex items-center justify-center">
+          <button
+            type="button"
+            onClick={toggleRatingSort}
+            aria-pressed={!!sortRating}
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-[#195D5D] hover:bg-gray-50"
+            title="Toggle rating sort"
+          >
+            <span>ESG Rating</span>
+            {sortRating === "asc" ? (
+              <SortUp className="h-4 w-4 text-gray-400" />
+            ) : sortRating === "desc" ? (
+              <SortDown className="h-4 w-4 text-gray-400" />
+            ) : (
+              <SortBoth className="h-4 w-4 text-gray-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Year/Action - Compact */}
+        <div className="relative flex items-center justify-center">
+          <HeaderDropdown label={`${p.filterYear} Report`} chevron center>
+            <MenuList align="right">
+              {p.yearOptions.map((y) => (
+                <MenuItem key={y} selected={p.filterYear === y} onClick={() => p.onFilterYear(y)}>
+                  {y} Report
+                </MenuItem>
+              ))}
+            </MenuList>
+          </HeaderDropdown>
+        </div>
+      </div>
+
+      {/* ====================== SCROLLABLE TABLE BODY ====================== */}
+      <div className="max-h-[500px] overflow-y-auto">
+        <ul className="divide-y divide-gray-200">
+        {(p.rows ?? []).map((r, i) => {
+          const owned = hasReport(r.company, r.year);
+          const reportFilename = r.reportFilename || 'No file available';
+          
+          return (
+            <li
+              key={`${r.company}-${i}`}
+              className={`grid min-w-0 ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} items-center px-4 sm:px-6 ${ROW_H}`}
+            >
+              {/* Company Name - Left aligned with proper spacing */}
+              <div className="min-w-0 truncate text-[15px] text-gray-900 pr-4">
+                {r.company}
+              </div>
+              
+              {/* Sector - Center aligned */}
+              <div className="text-center text-[14px] text-gray-600 px-2">
+                {r.sector || '—'}
+              </div>
+              
+              {/* Rating - Center aligned, bold */}
+              <div className="text-center text-[14px] font-extrabold text-gray-900">
+                {r.rating}
+              </div>
+              
+              {/* Action Button - Center aligned */}
+              <div className="text-center">
+                {mode === "mine" ? (
+                  reportFilename && reportFilename !== 'No file available' ? (
+                    <button
+                      className="text-[14px] font-medium text-[#195D5D] hover:underline"
+                      onClick={() => handleSecureDownload(r.company)}
+                    >
+                      View
+                    </button>
+                  ) : (
+                    <span className="text-[14px] text-gray-400">No Report</span>
+                  )
+                ) : isLoggedIn ? (
                   <button
                     className="text-[14px] font-medium text-[#1D7AEA] hover:underline"
-                      onClick={async () => {
-                        // Log the action first and wait for it to complete
-                        if (r.isin) { // Add a type guard to check if r.isin is defined
-                          const logged = await handlePurchaseClick(r.isin, r.company); // Pass isin and company name
-
-                          // Only proceed with the original action if logging was successful
-                          if (logged) {
-                            p.onRequest(r.company); // This is the original action
-                          } else {
-                            // Optional: Inform the user that the request couldn't be logged/processed
-                            console.log("Purchase action not logged, original request cancelled.");
-                          }
+                    onClick={async () => {
+                      if (r.isin) {
+                        const logged = await handlePurchaseClick(r.isin, r.company);
+                        if (logged) {
+                          p.onRequest(r.company);
+                        } else {
+                          console.log("Purchase action not logged, original request cancelled.");
                         }
-                      }}
+                      }
+                    }}
                   >
                     Purchase
                   </button>
-                  ) : (
-                    <button
-                      className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
-                      disabled
-                      title="Sign in to download"
-                    >
-                      Purchase
-                    </button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-
-          {/* Filler rows to stabilize height (only when not in scroll view) */}
-          {!scrollView && Array.from({ length: fillerCount }).map((_, i) => (
-            <li key={`filler-${i}`} className={`grid ${mode === "mine" ? "grid-cols-[1.2fr_1fr_.6fr_.8fr_.6fr]" : "grid-cols-[1.2fr_1fr_.6fr_.6fr]"} px-4 sm:px-6 ${ROW_H}`}>
-              <div />
-              <div />
-              <div />
-              {mode === "mine" && <div />}
-              <div />
+                ) : (
+                  <button
+                    className="text-[14px] font-medium text-gray-400 cursor-not-allowed"
+                    disabled
+                    title="Sign in to download"
+                  >
+                    Purchase
+                  </button>
+                )}
+              </div>
             </li>
-          ))}
-          </ul>
+          );
+        })}
+
+        {/* Filler rows to stabilize height */}
+        {!scrollView && Array.from({ length: fillerCount }).map((_, i) => (
+          <li key={`filler-${i}`} className={`grid ${mode === "mine" ? "grid-cols-[2.5fr_1.5fr_1fr_1fr]" : "grid-cols-[2.5fr_1.5fr_1fr_1fr]"} px-4 sm:px-6 ${ROW_H}`}>
+            <div />
+            <div />
+            <div />
+            <div />
+          </li>
+        ))}
+        </ul>
+      </div>
+
+      {/* ====================== FOOTER / PAGINATION ====================== */}
+      {!scrollView && (
+        <div className="flex items-center justify-center gap-2 px-4 h-16 border-t border-gray-200 rounded-b-[14px]">
+        <PagerButton ariaLabel="First" disabled={p.page === 1} onClick={() => p.onPage(1)}>
+          <ChevronsLeft className="h-4 w-4" />
+        </PagerButton>
+        <PagerButton ariaLabel="Prev" disabled={p.page === 1} onClick={() => p.onPage(p.page - 1)}>
+          <ChevronLeft className="h-4 w-4" />
+        </PagerButton>
+
+        <div className="mx-2 flex items-center gap-2">
+          {makeWindow(p.page, p.pages).map((n, idx) =>
+            n === -1 ? (
+              <span key={`dots-${idx}`} className="select-none text-gray-400">
+                …
+              </span>
+            ) : (
+              <button
+                key={n}
+                onClick={() => p.onPage(n)}
+                className={
+                  n === p.page
+                    ? "h-8 w-8 rounded-full bg-gray-900 text-[13px] font-semibold text-white"
+                    : "h-8 w-8 rounded-full text-[13px] text-gray-500 hover:bg-gray-100"
+                }
+              >
+                {n}
+              </button>
+            )
+          )}
         </div>
 
-        {/* ====================== FOOTER / PAGINATION (hidden in scroll view) ====================== */}
-        {!scrollView && (
-          <div className="flex items-center justify-center gap-2 px-4 h-16 border-t border-gray-200 rounded-b-[14px]">
-          <PagerButton ariaLabel="First" disabled={p.page === 1} onClick={() => p.onPage(1)}>
-            <ChevronsLeft className="h-4 w-4" />
-          </PagerButton>
-          <PagerButton ariaLabel="Prev" disabled={p.page === 1} onClick={() => p.onPage(p.page - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </PagerButton>
-
-          <div className="mx-2 flex items-center gap-2">
-            {makeWindow(p.page, p.pages).map((n, idx) =>
-              n === -1 ? (
-                <span key={`dots-${idx}`} className="select-none text-gray-400">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={n}
-                  onClick={() => p.onPage(n)}
-                  className={
-                    n === p.page
-                      ? "h-8 w-8 rounded-full bg-gray-900 text-[13px] font-semibold text-white"
-                      : "h-8 w-8 rounded-full text-[13px] text-gray-500 hover:bg-gray-100"
-                  }
-                >
-                  {n}
-                </button>
-              )
-            )}
-          </div>
-
-          <PagerButton ariaLabel="Next" disabled={p.page === p.pages} onClick={() => p.onPage(p.page + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </PagerButton>
-          <PagerButton ariaLabel="Last" disabled={p.page === p.pages} onClick={() => p.onPage(p.pages)}>
-            <ChevronsRight className="h-4 w-4" />
-          </PagerButton>
-          </div>
-        )}
-      </div>
-      
-      {/* PDF Viewer Modal */}
-      <PDFViewer
-        isOpen={pdfViewerOpen}
-        onClose={() => setPdfViewerOpen(false)}
-        companyName={selectedCompanyName}
-        title={`${selectedCompanyName} ESG Report`}
-      />
+        <PagerButton ariaLabel="Next" disabled={p.page === p.pages} onClick={() => p.onPage(p.page + 1)}>
+          <ChevronRight className="h-4 w-4" />
+        </PagerButton>
+        <PagerButton ariaLabel="Last" disabled={p.page === p.pages} onClick={() => p.onPage(p.pages)}>
+          <ChevronsRight className="h-4 w-4" />
+        </PagerButton>
+        </div>
+      )}
     </div>
-  );
+    
+    {/* PDF Viewer Modal */}
+    <PDFViewer
+      isOpen={pdfViewerOpen}
+      onClose={() => setPdfViewerOpen(false)}
+      companyName={selectedCompanyName}
+      title={`${selectedCompanyName} ESG Report`}
+    />
+  </div>
+);
 }
 
 /* ====================== MULTI-SELECT DROPDOWN ====================== */
