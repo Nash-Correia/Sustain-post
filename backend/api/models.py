@@ -239,15 +239,15 @@ class PurchaseLog(models.Model):
     )
     # Store user details at the time of purchase, in case user profile changes later
     user_id_recorded = models.IntegerField(null=True, blank=True) # Store ID explicitly
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    organization = models.CharField(max_length=255, blank=True)
-    job_title = models.CharField(max_length=255, blank=True)
+    #first_name = models.CharField(max_length=150, blank=True)
+    #last_name = models.CharField(max_length=150, blank=True)
+    #organization = models.CharField(max_length=255, blank=True)
+    #job_title = models.CharField(max_length=255, blank=True)
     company_name = models.CharField(max_length=255, blank=True, help_text="Name of the company report purchased/requested")
     # Consider adding info about *what* was purchased if needed (e.g., company ISIN)
     # company_isin = models.CharField(max_length=50, blank=True)
-    phone_number = models.CharField(max_length=32, blank=True, default='')
-    email = models.EmailField(blank=True, null=True)
+    #phone_number = models.CharField(max_length=32, blank=True, default='')
+    #email = models.EmailField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
 
     def __str__(self):

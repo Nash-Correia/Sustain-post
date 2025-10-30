@@ -841,7 +841,7 @@ def log_purchase(request):
         PurchaseLog.objects.create(
                 user=user,
                 user_id_recorded=user.id,
-                username=user.username,
+                #username=user.username,
                 first_name=user.first_name or "",
                 last_name=user.last_name or "",
                 organization=getattr(user, "organization", "") or "",
