@@ -212,15 +212,19 @@ export default function Header() {
           <Link href={ROUTES.home} className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo/iias-sustain-logo.png" alt="IiAS Sustain" className="h-20 w-auto" />
-            <span className="text-2xl font-bold text-gray-900">IiAS Sustain</span>
+            {/* <span className="text-2xl font-bold text-gray-900">IiAS Sustain</span> */}
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-12">
             <nav className="flex items-center gap-6 text-xl">
               <Dropdown label="Products" className={navLinkClasses} align="center">
-                <MenuItem href={ROUTES.productA}>ESG Rating Comparison</MenuItem>
-                <MenuItem href={ROUTES.productB}>ESG Reports</MenuItem>
+                {/* <MenuItem href={ROUTES.productA}>ESG Rating Comparison</MenuItem>
+                <MenuItem href={ROUTES.productB}>ESG Reports</MenuItem> */}
+                <MenuItem href={`${ROUTES.productA}?q=&type=Funds`}>Fund Compare</MenuItem>
+                <MenuItem href={`${ROUTES.productA}?q=&type=Sectors`}>Sector Compare</MenuItem>
+                <MenuItem href={ROUTES.productB}>Company Reports</MenuItem>
+                <MenuItem href={ `${ROUTES.productA}?q=&type=Companies`}>Company Compare</MenuItem>
               </Dropdown>
 
               <Link href={ROUTES.methodology} className={navLinkClasses}>

@@ -15,11 +15,12 @@ const footerSections = [
   {
     title: "Products",
     links: [
+      { text: "ESG Report", href: ROUTES.productB}, // Placeholder link
       { text: "Voting Advisory", href: "https://www.iiasadvisory.com/voting-advisory" }, // Placeholder link
       { text: "Voting Analytics", href: "https://www.iiasadrian.com/" }, // Placeholder link
-      { text: "Compayre", href: "https://www.iiascompayre.com/introduction" }, // Placeholder link
+      { text: "Compensation Data", href: "https://www.iiascompayre.com/introduction" }, // Placeholder link
       { text: "Governance Scorecard", href: "https://www.iiasadvisory.com/governance-Scorecard" }, // Placeholder link
-      { text: "ESG Advisory", href: "https://www.iiasadvisory.com/esg" },
+      // { text: "ESG Advisory", href: "https://www.iiasadvisory.com/esg" },
     ],
   },
   {

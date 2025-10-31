@@ -77,6 +77,10 @@ export default function MethodologyPage() {
       <OverviewTrigger onClick={() => setIsPanelOpen(true)} />
       <MethodologyOverviewPanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} />
       <BackToTopButton />
+
+
+      
     </>
+    
   );
 }

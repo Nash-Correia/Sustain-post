@@ -63,7 +63,7 @@ export default function StatsGrid() {
       download: true,                           // trigger download
       downloadFileName: "BSE_500_Companies.xlsx"
     },
-    { value: "2010", label: "IiAS's Year of Establishment", Icon: CalendarIcon, herf: "https://www.iiasadvisory.com/" },
+    //{ value: "2010", label: "IiAS's Year of Establishment", Icon: CalendarIcon, herf: "https://www.iiasadvisory.com/" },
     { value: "SEBI", label: "Registered ERP", Icon: ErpIcon, herf: ROUTES.about },
     { value: "UN PRI", label: "Signatory of UN PRI", Icon: PriIcon, herf: "https://www.unpri.org/" },
     { value: "700+", label: "Reports Generated", Icon: ReportsIcon, herf: ROUTES.productB },
@@ -153,13 +153,13 @@ export default function StatsGrid() {
       <div className="flex flex-col items-center gap-6">
         {/* First row */}
         <div className="flex justify-center gap-10 flex-wrap">
-          {stats.slice(0, 3).map((item, index) => renderCard(item, index))}
+          {stats.slice(0, 4).map((item, index) => renderCard(item, index))}
         </div>
 
         {/* Second row */}
-        <div className="flex justify-center gap-10 flex-wrap">
+        {/* <div className="flex justify-center gap-10 flex-wrap">
           {stats.slice(3).map((item, i) => renderCard(item, i))}
-        </div>
+        </div> */}
       </div>
     </section>
   );

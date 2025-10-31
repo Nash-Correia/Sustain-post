@@ -228,8 +228,11 @@ export default function RatingTable(p: Props) {
                             const logged = await handlePurchaseClick(r.isin, r.company);
                             if (logged) {
                               p.onRequest(r.company);
+                            }else{
+                              setShowLoginModal(true)
                             }
                           }
+                          //p.onRequest(r.company);
                         }}
                       >
                         Purchase

@@ -657,6 +657,59 @@ export default function AboutPage() {
       <Disclosures />
       <TermsAndConditions />
       <Subscribe/>
+            <div>
+          {/* ===== Floating Read Summary Button ===== */}
+<button
+  onClick={() => window.location.href = 'https://www.iiasadvisory.com/'}
+  className="
+    fixed top-1/4 right-0 -translate-y-1/2 
+    bg-teal-700 hover:bg-teal-800
+    text-white font-semibold 
+    py-3 px-4 rounded-l-lg shadow-lg 
+    z-50 transition-colors duration-200 min-w-[120px]
+    flex items-center gap-2
+  "
+>
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    className='w-5 h-5 rotate-180'
+    fill='none'
+    stroke='currentColor'
+    viewBox='0 0 24 24'
+    strokeWidth='2'
+  >
+    <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
+  </svg>
+  <span >IiAS</span>
+</button>
+
+      </div>
+      <div>
+<button
+  onClick={() => window.location.href = 'https://www.iiasadrian.com/'}
+  className="
+    fixed top-1/3 right-0 -translate-y-1/2 
+    bg-teal-700 hover:bg-teal-800
+    text-white font-semibold 
+    py-3 px-4 rounded-l-lg shadow-lg 
+    z-50 transition-colors duration-200 min-w-[120px]
+    flex items-center gap-2
+    
+  "
+>
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    className='w-5 h-5 rotate-180'
+    fill='none'
+    stroke='currentColor'
+    viewBox='0 0 24 24'
+    strokeWidth='2'
+  >
+    <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
+  </svg>
+  <span >ADRIAN</span>
+</button>
+      </div>
     </>
   );
 }
