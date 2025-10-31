@@ -169,6 +169,16 @@ const AdminPanel: React.FC = () => {
     [tab, user],
   );
 
+  const handleRefreshLogs = useCallback(() => {
+  if (tab !== 'logs') return;
+  setIsInitialLoad(true);
+  setPurchaseLogs([]);
+  setCurrentPage(1);
+  setHasMoreLogs(true);
+  void fetchLogs(1, { startDate, endDate }, true);
+}, [tab, startDate, endDate, fetchLogs]);
+  
+
   // When switching to logs tab or changing filters
   useEffect(() => {
     if (tab !== 'logs') return;
@@ -425,11 +435,19 @@ const AdminPanel: React.FC = () => {
                   Clear Dates
                 </button>
               )}
+              <div>
+              <button
+                  onClick={handleRefreshLogs}
+                  className="rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+                >
+                  Refresh Users
+                </button>
+                </div>
             </div>
 
             {/* Table */}
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <table className="min-w-full max-h-[120px] divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Timestamp</th>
