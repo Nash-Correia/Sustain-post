@@ -446,8 +446,8 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto   max-h-[120px]">
-              <table className="min-w-full max-h-[120px] divide-y divide-gray-200 text-sm">
+            <div className="overflow-x-auto  max-h-[250px]">
+              <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Timestamp</th>
