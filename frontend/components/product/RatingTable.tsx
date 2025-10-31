@@ -344,7 +344,7 @@ export default function RatingTable(p: Props) {
                       } else if (process.env.NEXT_PUBLIC_LOGIN_URL) {
                         window.location.href = process.env.NEXT_PUBLIC_LOGIN_URL;
                       } else {
-                        window.location.href = "/login";
+                        window.location.href = "/auth/login";
                       }
 
                   } finally {
