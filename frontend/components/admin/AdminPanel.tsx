@@ -291,7 +291,7 @@ const AdminPanel: React.FC = () => {
                   onClick={loadUsers}
                   className="rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
                 >
-                  Refresh Users
+                  Refresh
                 </button>
               </div>
             </div>
@@ -435,12 +435,12 @@ const AdminPanel: React.FC = () => {
                   Clear Dates
                 </button>
               )}
-              <div>
+              <div className='item-justify-end'>
               <button
                   onClick={handleRefreshLogs}
                   className="rounded-lg bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
                 >
-                  Refresh Users
+                  Refresh
                 </button>
                 </div>
             </div>
