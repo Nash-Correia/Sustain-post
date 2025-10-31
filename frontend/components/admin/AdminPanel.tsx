@@ -459,35 +459,45 @@ const AdminPanel: React.FC = () => {
                     <th className="px-4 py-2 text-left font-medium uppercase tracking-wider text-gray-500">Company Name</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
-                  {purchaseLogs.length > 0 ? (
-                    purchaseLogs.map((log) => (
-                      <tr key={log.id}>
-                        <td className="whitespace-nowrap px-4 py-2">{new Date(log.timestamp).toLocaleString()}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.username}</td>
-                        <td className="whitespace-nowrap px-4 py-2">
-                          {`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.email || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.phone_number || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.organization || '-'}</td>
-                        <td className="whitespace-nowrap px-4 py-2">{log.company_name || '-'}</td>
-                        <tr>
-                          <p className="text-gray-500">----End of logs----</p>
-                        </tr>
-                      </tr>
-                      
-                    ))
-                  ) : (
-                    !logLoading && (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
-                          No logs found for the selected period.
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
+<tbody className="divide-y divide-gray-200 bg-white">
+  {purchaseLogs.length > 0 ? (
+    <>
+      {purchaseLogs.map((log) => (
+        <tr key={log.id}>
+          <td className="whitespace-nowrap px-4 py-2">
+            {new Date(log.timestamp).toLocaleString()}
+          </td>
+          <td className="whitespace-nowrap px-4 py-2">{log.username}</td>
+          <td className="whitespace-nowrap px-4 py-2">
+            {`${log.first_name || ''} ${log.last_name || ''}`.trim() || '-'}
+          </td>
+          <td className="whitespace-nowrap px-4 py-2">{log.email || '-'}</td>
+          <td className="whitespace-nowrap px-4 py-2">{log.phone_number || '-'}</td>
+          <td className="whitespace-nowrap px-4 py-2">{log.organization || '-'}</td>
+          <td className="whitespace-nowrap px-4 py-2">{log.company_name || '-'}</td>
+        </tr>
+      ))}
+
+      {/* End of logs message */}
+      {!hasMoreLogs && (
+        <tr>
+          <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
+            ---- End of logs ----
+          </td>
+        </tr>
+      )}
+    </>
+  ) : (
+    !logLoading && (
+      <tr>
+        <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
+          No logs found for the selected period.
+        </td>
+      </tr>
+    )
+  )}
+</tbody>
+
               </table>
             </div>
 
