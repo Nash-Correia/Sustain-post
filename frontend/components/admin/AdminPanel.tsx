@@ -446,7 +446,7 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto   max-h-[120px]">
               <table className="min-w-full max-h-[120px] divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
