@@ -446,7 +446,7 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto  max-h-[250px]">
+            <div className="overflow-x-auto  max-h-[400px]">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
                   <tr>
@@ -472,7 +472,11 @@ const AdminPanel: React.FC = () => {
                         <td className="whitespace-nowrap px-4 py-2">{log.phone_number || '-'}</td>
                         <td className="whitespace-nowrap px-4 py-2">{log.organization || '-'}</td>
                         <td className="whitespace-nowrap px-4 py-2">{log.company_name || '-'}</td>
+                        <tr>
+                          <p className="text-gray-500">----End of logs----</p>
+                        </tr>
                       </tr>
+                      
                     ))
                   ) : (
                     !logLoading && (
