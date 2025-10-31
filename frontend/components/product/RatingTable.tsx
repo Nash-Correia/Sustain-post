@@ -4,14 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { authService } from "@/lib/auth";
 import PDFViewer from "@/components/PDFViewer";
-
-/**
- * NOTE: Minimal, focused edits:
- *  - Added login-required modal + pending selection + spinner state
- *  - Button always clickable; opens login modal if not authenticated
- *  - After login (isLoggedIn flips true), auto-retries log-purchase once, then calls onRequest
- *  - Kept all other UI/props/structure unchanged
- */
+import LoginRequiredModal from "@/components/LoginRequiredModal";
 
 export type RatingRow = {
   company: string;
@@ -26,17 +19,23 @@ export type RatingRow = {
 type SortOrder = "asc" | "desc" | null;
 
 type Props = {
+  // Data (already filtered/paginated upstream if needed)
   rows: RatingRow[];
 
   // Filters
   companyOptions?: string[];
   filterCompanies?: string[];
   onFilterCompanies?: (values: string[]) => void;
+
   sectorOptions?: string[];
   filterSectors?: string[];
   onFilterSectors?: (values: string[]) => void;
+
+  // Sorting
   sortRating?: SortOrder;
   onSortRating?: (order: SortOrder) => void;
+
+  // Year
   filterYear: number;
   onFilterYear: (v: number) => void;
   yearOptions: number[];
@@ -44,6 +43,8 @@ type Props = {
   // Actions
   onRequest: (company: string) => void;
   isLoggedIn?: boolean;
+
+  // Optional ownership/info hooks (kept for API compatibility; not used here)
   hasReport?: (company: string, year: number) => boolean;
   onShow?: (row: RatingRow) => void;
 
@@ -51,17 +52,18 @@ type Props = {
   mode?: "all" | "mine";
   showTabs?: boolean;
 
-  // Infinite scroll
+  // Infinite scroll (optional)
   infiniteScroll?: boolean;
   loadingMore?: boolean;
   hasMore?: boolean;
   loadMoreRef?: React.RefObject<HTMLDivElement>;
+  //loadMoreSubject: React.RefObject<HTMLDivElement>;
 };
 
 const ROW_H = "h-12";
 
 export default function RatingTable(p: Props) {
-  // Null-safe fallbacks
+  // --------- Null-safe fallbacks (only for used props) ----------
   const companyOptions = p.companyOptions ?? [];
   const sectorOptions = p.sectorOptions ?? [];
   const filterCompanies = p.filterCompanies ?? [];
@@ -70,23 +72,20 @@ export default function RatingTable(p: Props) {
   const onFilterCompanies = p.onFilterCompanies ?? (() => {});
   const onFilterSectors = p.onFilterSectors ?? (() => {});
   const onSortRating = p.onSortRating ?? (() => {});
-  const isLoggedIn = p.isLoggedIn ?? false;
-  const hasReport = p.hasReport ?? (() => false);
-  const onShow = p.onShow ?? (() => {});
+  const isLoggedIn = Boolean(p.isLoggedIn);
   const mode = p.mode ?? "all";
-  const showTabs = p.showTabs ?? false;
+  const showTabs = Boolean(p.showTabs);
   const infiniteScroll = p.infiniteScroll ?? true;
   const loadingMore = p.loadingMore ?? false;
   const hasMore = p.hasMore ?? false;
+  // --------------------------------------------------------------
 
   // PDF Viewer state
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedCompanyName, setSelectedCompanyName] = useState<string>("");
 
-  // ---- Added for auth/purchase flow ----
+  // Login-required modal
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [pendingSelection, setPendingSelection] = useState<{ company: string; isin?: string } | null>(null);
-  const [purchasing, setPurchasing] = useState<string | null>(null); // holds company name while logging
 
   function toggleRatingSort() {
     if (sortRating === null) return onSortRating("asc");
@@ -99,53 +98,51 @@ export default function RatingTable(p: Props) {
     setPdfViewerOpen(true);
   }
 
-  // Minimal, correct payload to avoid backend "unexpected keyword" issues
-  async function logPurchase(company: string, isin?: string) {
+  const handlePurchaseClick = async (companyIsin: string | undefined, companyName: string): Promise<boolean> => {
+    // If not logged in, show modal and abort
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return false;
+    }
+
+    // Only attempt logging when authenticated
     try {
-      const token = authService.getAccessToken?.();
-      if (!token) return false; // not authenticated
+      const token = authService.getAccessToken();
+      if (!token) {
+        // Token missing → treat as not logged-in
+        setShowLoginModal(true);
+        return false;
+      }
 
       const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/log-purchase/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${String(token)}`,
         },
-        body: JSON.stringify({ company_name: company, ...(isin ? { isin } : {}) }),
+        // Back-end expects company_name; keep ISIN available if later needed
+        body: JSON.stringify({ company_name: companyName, ...(companyIsin ? { company_isin: companyIsin } : {}) }),
       });
 
-      if (resp.status === 401 || resp.status === 403) return false; // token invalid/expired
       if (!resp.ok) {
-        console.error("log-purchase failed:", resp.status);
+        // Try to read server error for logging; still avoid throwing
+        try {
+          const data = (await resp.json()) as Record<string, unknown>;
+          // eslint-disable-next-line no-console
+          console.error("Failed to log purchase:", data);
+        } catch {
+          // ignore parse errors
+        }
         return false;
       }
+
       return true;
-    } catch (e) {
-      console.error("log-purchase error:", e);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Error logging purchase:", err);
       return false;
     }
-  }
-
-  // After login, auto-resume log-purchase once then call onRequest
-  useEffect(() => {
-    if (!pendingSelection) return;
-    if (!isLoggedIn) return;
-
-    (async () => {
-      setPurchasing(pendingSelection.company);
-      const ok = await logPurchase(pendingSelection.company, pendingSelection.isin);
-      setPurchasing(null);
-
-      if (ok) {
-        p.onRequest?.(pendingSelection.company);
-        setPendingSelection(null);
-      } else {
-        // keep pending so user can retry after another login attempt
-        console.warn("Auto-resume log-purchase failed");
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn]); // rely on external auth flip
+  };
 
   return (
     <div className="pt-0">
@@ -228,12 +225,16 @@ export default function RatingTable(p: Props) {
                   key={`${r.company}-${i}`}
                   className={`grid min-w-0 grid-cols-[2.5fr_1.5fr_1fr_1fr] items-center px-4 sm:px-6 ${ROW_H}`}
                 >
+                  {/* Company */}
                   <div className="min-w-0 truncate text-[15px] text-gray-900 pr-4">{r.company}</div>
 
+                  {/* Sector */}
                   <div className="text-center text-[14px] text-gray-600 px-2">{r.sector || "—"}</div>
 
+                  {/* Rating */}
                   <div className="text-center text-[14px] font-extrabold text-gray-900">{r.rating}</div>
 
+                  {/* Action */}
                   <div className="text-center">
                     {mode === "mine" ? (
                       reportFilename && reportFilename !== "No file available" ? (
@@ -247,34 +248,19 @@ export default function RatingTable(p: Props) {
                         <span className="text-[14px] text-gray-400">No Report</span>
                       )
                     ) : (
-                      // ALWAYS clickable; handles login and logging internally
                       <button
-                        className="text-[14px] font-medium text-[#1D7AEA] hover:underline disabled:opacity-50"
-                        disabled={purchasing === r.company}
+                        className={`text-[14px] font-medium ${
+                          isLoggedIn ? "text-[#1D7AEA] hover:underline" : "text-gray-400"
+                        } ${!isLoggedIn ? "cursor-not-allowed" : ""}`}
                         onClick={async () => {
-                          // If not logged in → open login modal and store intent
-                          if (!isLoggedIn) {
-                            setPendingSelection({ company: r.company, isin: r.isin });
-                            setShowLoginModal(true);
-                            return;
-                          }
-
-                          // Logged in: attempt to log-purchase, then open request
-                          setPurchasing(r.company);
-                          const ok = await logPurchase(r.company, r.isin);
-                          setPurchasing(null);
-
+                          const ok = await handlePurchaseClick(r.isin, r.company);
                           if (ok) {
-                            p.onRequest?.(r.company);
-                          } else {
-                            // token invalid/expired or server error → ask to login
-                            setPendingSelection({ company: r.company, isin: r.isin });
-                            setShowLoginModal(true);
+                            p.onRequest(r.company);
                           }
+                          // If not ok and not logged in, modal is already shown inside handlePurchaseClick.
                         }}
-                        title={purchasing === r.company ? "Processing…" : "Purchase"}
                       >
-                        {purchasing === r.company ? "Processing…" : "Purchase"}
+                        Purchase
                       </button>
                     )}
                   </div>
@@ -283,22 +269,17 @@ export default function RatingTable(p: Props) {
             })}
 
             {/* Empty state */}
-            {p.rows.length === 0 && (
-              <li className="px-4 py-12 text-center text-gray-500">No companies match your filters</li>
+            {(!p.rows || p.rows.length === 0) && (
+              <li className="px-4 py-4 text-center text-gray-500">No records found.</li>
             )}
           </ul>
 
-          {/* Infinite scroll trigger */}
+          {/* Infinite scroll status / sentinel */}
           {infiniteScroll && (
-            <div ref={p.loadMoreRef} className="h-16 py-4 text-center">
-              {loadingMore && (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-teal-600" />
-                  <span className="text-sm text-gray-600">Loading more...</span>
-                </div>
-              )}
-              {!hasMore && p.rows.length > 0 && (
-                <p className="text-sm text-gray-500">---- End of results ----</p>
+            <div ref={p.loadMoreRef} className="h-10 py-3 text-center">
+              {loadingMore && <p className="text-gray-600 text-sm">Loading…</p>}
+              {!loadingMore && !hasMore && (p.rows?.length ?? 0) > 0 && (
+                <p className="text-gray-500 text-sm">— End of list —</p>
               )}
             </div>
           )}
@@ -313,53 +294,8 @@ export default function RatingTable(p: Props) {
         title={`${selectedCompanyName} ESG Report`}
       />
 
-      {/* ---- Login Required Modal (inline, no extra imports) ---- */}
-      {showLoginModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="mb-1 text-lg font-semibold text-gray-900">Sign in required</h3>
-            <p className="mb-4 text-sm text-gray-600">Please sign in to continue with your request.</p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="rounded-md px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => {
-                  // If your auth library exposes a login trigger, call it here.
-                  // Fallback: navigate to a login page. After login, isLoggedIn should flip to true, which auto-retries.
-                  try {
-                      const maybe = authService as unknown;
-                      const authServiceWithLogin = maybe as {
-                        startLogin?: () => Promise<void>;
-                        login?: (args?: Record<string, unknown>) => Promise<void>;
-                      };
-
-                      if (authServiceWithLogin?.startLogin) {
-                        await authServiceWithLogin.startLogin();
-                      } else if (authServiceWithLogin?.login) {
-                        await authServiceWithLogin.login(); // or pass credentials if required
-                      } else if (process.env.NEXT_PUBLIC_LOGIN_URL) {
-                        window.location.href = process.env.NEXT_PUBLIC_LOGIN_URL;
-                      } else {
-                        window.location.href = "/auth/login";
-                      }
-
-                  } finally {
-                    // keep modal open until auth state changes, or close immediately if you prefer:
-                    // setShowLoginModal(false);
-                  }
-                }}
-                className="rounded-md bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800"
-              >
-                Sign in
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Login Required Modal (shown when clicking Purchase while not logged in) */}
+      <LoginRequiredModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }
@@ -433,6 +369,7 @@ function MultiSelectDropdown({
         <ChevronDown className="h-4 w-4 text-gray-400" />
       </button>
 
+      {/* DROPDOWN */}
       <div
         className={[
           "absolute top-full z-50 mt-2 min-w-[280px] rounded-xl border border-gray-200 bg-white shadow-xl",
@@ -484,10 +421,7 @@ function MultiSelectDropdown({
             filtered.map((opt) => {
               const isChecked = safeSelected.includes(opt);
               return (
-                <label
-                  key={opt}
-                  className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"
-                >
+                <label key={opt} className="flex cursor-pointer items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-gray-300 text-[#195D5D] focus:ring-[#195D5D]"
@@ -502,11 +436,7 @@ function MultiSelectDropdown({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-gray-100 px-3 py-2">
-          <button
-            type="button"
-            className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-            onClick={() => setOpen(false)}
-          >
+          <button type="button" className="rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50" onClick={() => setOpen(false)}>
             Close
           </button>
         </div>
@@ -515,7 +445,7 @@ function MultiSelectDropdown({
   );
 }
 
-/* ====================== SIMPLE DROPDOWN ====================== */
+/* ====================== SIMPLE DROPDOWN (YEAR) ====================== */
 
 function HeaderDropdown({
   label,
@@ -567,13 +497,7 @@ function HeaderDropdown({
   );
 }
 
-function MenuList({
-  children,
-  align = "left",
-}: {
-  children: React.ReactNode;
-  align?: "left" | "right";
-}) {
+function MenuList({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
   return <div className={["py-2", align === "right" ? "text-right" : ""].join(" ")}>{children}</div>;
 }
 
@@ -590,10 +514,7 @@ function MenuItem({
     <button
       onClick={onClick}
       role="menuitem"
-      className={[
-        "block w-full px-4 py-2 text-left text-[14px]",
-        selected ? "bg-gray-100 font-medium text-gray-900" : "text-gray-700 hover:bg-gray-50",
-      ].join(" ")}
+      className={["block w-full px-4 py-2 text-left text-[14px]", selected ? "bg-gray-100 font-medium text-gray-900" : "text-gray-700 hover:bg-gray-50"].join(" ")}
     >
       {children}
     </button>
@@ -609,7 +530,6 @@ function ChevronDown(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
 function SortBoth(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -618,7 +538,6 @@ function SortBoth(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
 function SortUp(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -626,7 +545,6 @@ function SortUp(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
 function SortDown(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
@@ -634,7 +552,6 @@ function SortDown(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-
 function SearchIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" {...props}>
