@@ -310,7 +310,7 @@ const AdminPanel: React.FC = () => {
                 <span className="ml-3 text-gray-600">Loading users...</span>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[400px]">
                 <div className="border-b border-gray-200 px-6 py-4">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Users ({sortedFilteredUsers.length})
@@ -505,7 +505,6 @@ const AdminPanel: React.FC = () => {
             <div ref={loadMoreRef} className="h-10 py-4 text-center">
               {logLoading && !isInitialLoad && <p className="text-gray-600">Loading more logs...</p>}
               {logError && <p className="text-red-600">Error: {logError}</p>}
-              {!hasMoreLogs && purchaseLogs.length > 0 && <p className="text-gray-500">----End of logs----</p>}
               {logLoading && isInitialLoad && <p className="text-gray-600">Loading initial logs...</p>}
             </div>
           </div>
