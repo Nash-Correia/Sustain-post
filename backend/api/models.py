@@ -4,6 +4,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings 
 from django.utils import timezone
+from django.utils.text import slugify
 
 class CaseInsensitiveUsernameValidator(UnicodeUsernameValidator):
     """Username validator that ensures case-insensitive uniqueness"""
@@ -258,3 +259,49 @@ class PurchaseLog(models.Model):
         ordering = ['-timestamp'] # Show newest logs first
         verbose_name = "Purchase Log Entry"
         verbose_name_plural = "Purchase Log Entries"
+
+
+
+
+# A new model for Tags
+class Tag(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+# The main model for your articles
+class Article(models.Model):
+    CATEGORY_CHOICES = [
+        ('INSTITUTIONAL_EYE', 'Institutional Eye'),
+        ('SPECIALS', 'Specials'),
+    ]
+
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, db_index=True)
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True, help_text="A unique URL-friendly version of the title. Will be auto-generated.")
+    main_image = models.ImageField(upload_to='article_images/', blank=True, null=True, help_text="Upload a main image for the article card.")
+    publication_date = models.DateField(default=timezone.now)
+    content = models.TextField(help_text="The main content of the article. You can use HTML.")
+    tags = models.ManyToManyField(Tag, blank=True, help_text="Select or create tags for this article.")
+    external_link = models.URLField(blank=True, null=True, help_text="Optional: Use for the 'Read our blog here' link.")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-publication_date'] # Show newest first
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title

@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from .models import CustomUser, Company, UserCompany, Fund, Report, UserReport, Note
 from .models import PurchaseLog 
 from django.contrib.admin import DateFieldListFilter 
+from .models import Tag, Article
 
 # Inline for UserCompany assignments
 class UserCompanyInline(admin.TabularInline):
@@ -269,3 +270,30 @@ class PurchaseLogAdmin(admin.ModelAdmin):
         return obj.user.job_title if obj.user else None
 
 admin.site.register(PurchaseLog, PurchaseLogAdmin)
+
+
+
+
+
+# Register the Tag model
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+
+# Register the Article model
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    list_display = ('title', 'category', 'publication_date')
+    list_filter = ('category', 'publication_date')
+    search_fields = ('title', 'content')
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal = ('tags',) # A much nicer UI for tags
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'slug', 'category', 'publication_date', 'content')
+        }),
+        ('Links & Tags', {
+            'fields': ('external_link', 'tags')
+        }),
+    )

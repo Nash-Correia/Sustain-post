@@ -1,6 +1,15 @@
-from django.urls import path
+from django.urls import path, include  # <-- Added 'include'
+from rest_framework.routers import DefaultRouter  # <-- Added this import
 from . import views
+from .views import TagViewSet, ArticleViewSet  # <-- Your new viewsets
 
+# Create the router
+router = DefaultRouter()
+# Register your new viewsets with the router
+router.register(r'tags', TagViewSet, basename='tag')
+router.register(r'articles', ArticleViewSet, basename='article')
+
+# Your existing URLs
 urlpatterns = [
     # User management
     path('profile/', views.user_profile, name='user_profile'),
@@ -48,6 +57,8 @@ urlpatterns = [
     # Admin user log management
     path('admin/purchase-logs/', views.AdminPurchaseLogListView.as_view(), name='admin_purchase_log_list'),
     path('log-purchase/', views.log_purchase, name='log_purchase'),
-    #path('admin/purchase-logs/', PurchaseLogListView.as_view(), name='admin-purchase-logs'),
+    
+    # --- ADD YOUR NEW ROUTER URLS HERE ---
+    path('', include(router.urls)),
 
 ]

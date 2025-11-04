@@ -638,7 +638,7 @@ export default function ProductAPage() {
       </div>
 
 
-      <div>
+<div>
           {/* ===== Floating Read Summary Button ===== */}
 <button
   onClick={() => window.location.href = 'https://www.iiasadvisory.com/'}
@@ -647,8 +647,9 @@ export default function ProductAPage() {
     bg-teal-700 hover:bg-teal-800
     text-white font-semibold 
     py-3 px-4 rounded-l-lg shadow-lg 
-    z-50 transition-colors duration-200 min-w-[120px]
+    z-50 transition-colors duration-200 
     flex items-center gap-2
+    [writing-mode:vertical-rl]
   "
 >
   <svg
@@ -661,7 +662,7 @@ export default function ProductAPage() {
   >
     <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
   </svg>
-  <span >IiAS</span>
+  <span className="rotate-180">IiAS</span>
 </button>
 
       </div>
@@ -669,12 +670,13 @@ export default function ProductAPage() {
 <button
   onClick={() => window.location.href = 'https://www.iiasadrian.com/'}
   className="
-    fixed top-1/3 right-0 -translate-y-1/2 
+    fixed top-1/2 right-0 -translate-y-1/2 
     bg-teal-700 hover:bg-teal-800
     text-white font-semibold 
     py-3 px-4 rounded-l-lg shadow-lg 
-    z-50 transition-colors duration-200 min-w-[120px]
+    z-50 transition-colors duration-200 
     flex items-center gap-2
+    [writing-mode:vertical-rl]
     
   "
 >
@@ -688,7 +690,7 @@ export default function ProductAPage() {
   >
     <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
   </svg>
-  <span >ADRIAN</span>
+  <span className="rotate-180">ADRIAN</span>
 </button>
       </div>
 

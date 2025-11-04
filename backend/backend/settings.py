@@ -200,3 +200,6 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

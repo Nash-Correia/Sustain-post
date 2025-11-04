@@ -14,6 +14,7 @@ export type RequestModalProps = {
   /** Kept for compat but not used (same modal for both states) */
   loggedIn?: boolean;
   companyOptions: string[];
+   preselectAll?: boolean;   
 };
 
 // -------------------- Validation --------------------
@@ -58,6 +59,7 @@ export default function RequestReportModal({
   defaultCompany,
   year,
   companyOptions,
+  preselectAll = false,
 }: RequestModalProps) {
   // form state
   const [companies, setCompanies] = useState<string[]>([]);
@@ -81,10 +83,13 @@ export default function RequestReportModal({
 
   // load default
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (preselectAll) {
+      setCompanies(companyOptions ?? []);
+    } else {
       setCompanies(defaultCompany ? [defaultCompany] : []);
     }
-  }, [open, defaultCompany]);
+  }, [open, defaultCompany, preselectAll, companyOptions]);
 
   const accessKey = useMemo(
     () => (process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "").trim(),

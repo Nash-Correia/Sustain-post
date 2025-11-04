@@ -13,3 +13,4 @@ openpyxl
 psycopg2
 gunicorn
 django-filter
+Pillow

@@ -39,6 +39,13 @@ from .serializers import (
 
 from .models import Note, Report, UserReport, Company, Fund, UserCompany, CustomUser
 
+
+from .models import Tag, Article # Add Tag and Article
+from .serializers import TagSerializer, ArticleSerializer # Add TagSerializer and ArticleSerializer
+from rest_framework import viewsets # Add viewsets
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+
 User = get_user_model()  # Standardize user model
 
 @api_view(['POST'])
@@ -905,3 +912,24 @@ class AdminPurchaseLogListView(generics.ListAPIView):
 
 
 
+
+
+# --- ADD THESE CLASSES AT THE END OF THE FILE ---
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows tags to be viewed.
+    """
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    
+class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows articles to be viewed.
+    """
+    queryset = Article.objects.all().prefetch_related('tags')
+    serializer_class = ArticleSerializer
+    filterset_fields = ['category', 'slug'] # Allow filtering by category
+    lookup_field = 'slug'
+    permission_classes = [IsAuthenticatedOrReadOnly]

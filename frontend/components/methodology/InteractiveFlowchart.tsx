@@ -29,8 +29,11 @@ const ThickArrow = () => <ChevronRight className="w-10 h-10 text-gray-400" />;
 const EnvIcon = () => <Leaf className="w-9 h-9" style={{ color: '#1c4439' }} />;
 const SocialIcon = () => <Users className="w-9 h-9" style={{ color: '#6ec8bd' }} />;
 const GovIcon = () => <Building2 className="w-9 h-9" style={{ color: '#cada8e' }} />;
-const PositiveIcon = () => <CheckCircle2 className="w-9 h-9 text-green-600" />;
-const NegativeIcon = () => <XCircle className="w-9 h-9 text-red-600" />;
+const PositiveIcon = () => 
+<img src="/images/Positive-Icon.png" alt="Positive-Icon" width={9} height={9} className="w-9 h-9" /> ;
+// const PositiveIcon = () => <CheckCircle2 className="w-9 h-9 text-green-600" />;
+const NegativeIcon = () => <img src="/images/Negative-Icon.png" alt="Negative-Icon" width={9} height={9} className="w-9 h-9" />;
+// const NegativeIcon = () => <XCircle className="w-9 h-9 text-red-600" />;
 const ControversyIcon = () => <AlertTriangle className="w-9 h-9 text-yellow-500" />;
 const ESGIcon = () => <Image src="/images/ESG Icon.svg" alt="ESG Icon" width={80} height={80} className="w-40 h-40" />;
 
@@ -73,7 +76,7 @@ export default function InteractiveMethodologyDiagram({ onNodeClick }: DiagramPr
           <div className="w-px h-8 my-4 border-l-2 border-dashed border-gray-300"></div>
           <div className="w-full rounded-2xl p-1 bg-gradient-to-r from-green-600 via-[#6ec8bd] to-[#cada8e]">
             <div className="bg-white rounded-xl p-6">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-1">
                 <InfoItem onClick={() => onNodeClick('environmental')} icon={<EnvIcon/>} text="Environmental" color="text-[#1c4439]" />
                 <InfoItem onClick={() => onNodeClick('social')} icon={<SocialIcon/>} text="Social" color="text-[#6ec8bd]" />
                 <InfoItem onClick={() => onNodeClick('governance')} icon={<GovIcon/>} text="Governance" color="text-[#cada8e]" />
@@ -99,7 +102,7 @@ export default function InteractiveMethodologyDiagram({ onNodeClick }: DiagramPr
           <div className="w-px h-8 my-4 border-l-2 border-dashed border-gray-300"></div>
           <div className="w-full rounded-2xl p-1 bg-gradient-to-r from-green-500 to-yellow-400">
             <div className="bg-white rounded-xl p-6">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <InfoItem onClick={() => onNodeClick('positive')} icon={<PositiveIcon/>} text="Positive" color="text-green-600" />
                 <InfoItem onClick={() => onNodeClick('negative')} icon={<NegativeIcon/>} text="Negative" color="text-red-600" />
                 <InfoItem onClick={() => onNodeClick('controversy')} icon={<ControversyIcon/>} text="Controversy" color="text-yellow-500" />

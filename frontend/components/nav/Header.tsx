@@ -211,13 +211,13 @@ export default function Header() {
           {/* Logo */}
           <Link href={ROUTES.home} className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo/iias-sustain-logo.png" alt="IiAS Sustain" className="h-20 w-auto" />
+            <img src="/logo/iias-sustain-logo.png" alt="IiAS Sustain" className="h-20 w-auto px-2" />
             {/* <span className="text-2xl font-bold text-gray-900">IiAS Sustain</span> */}
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-12">
-            <nav className="flex items-center gap-6 text-xl">
+            <nav className="flex items-center gap-8 text-xl">
               <Dropdown label="Products" className={navLinkClasses} align="center">
                 {/* <MenuItem href={ROUTES.productA}>ESG Rating Comparison</MenuItem>
                 <MenuItem href={ROUTES.productB}>ESG Reports</MenuItem> */}
@@ -225,6 +225,7 @@ export default function Header() {
                 <MenuItem href={`${ROUTES.productA}?q=&type=Sectors`}>Sector Compare</MenuItem>
                 <MenuItem href={ROUTES.productB}>Company Reports</MenuItem>
                 <MenuItem href={ `${ROUTES.productA}?q=&type=Companies`}>Company Compare</MenuItem>
+                <MenuItem href={ `${ROUTES.price}`}>Report Pricing</MenuItem>
               </Dropdown>
 
               {/* <Link href={ROUTES.methodology} className={navLinkClasses}>
@@ -232,8 +233,8 @@ export default function Header() {
               </Link> */}
               <Dropdown label="Methodology" className={navLinkClasses} align="center">
                 <MenuItem href={ROUTES.methodology}>Methodology</MenuItem>
-                <MenuItem href={ROUTES.methodology}>Institutional Eye</MenuItem>
-                <MenuItem href={ROUTES.methodology}>Specials</MenuItem>
+                <MenuItem href={ROUTES.institutionalEye}>Institutional Eye</MenuItem>
+                <MenuItem href={ROUTES.specials}>Specials</MenuItem>
               </Dropdown>
               
               <Dropdown label="About" className={navLinkClasses} align="center">

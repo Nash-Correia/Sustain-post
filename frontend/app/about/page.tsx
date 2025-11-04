@@ -231,6 +231,9 @@ const WhoWeAre = () => {
                 By combining IiAS’ deep expertise in corporate governance with rigorous ESG frameworks, IiAS Sustain is uniquely positioned to support the Indian market in strengthening accountability, improving disclosure quality, and advancing the sustainability agenda.
 
               </p>
+              <p>
+                SEBI Registration: INH000000024 (Registration Category-II/0006)  
+              </p>
             </div>
             <p className="text-sm text-gray-500 pt-4 border-t border-gray-200">
             </p>
@@ -311,7 +314,7 @@ const OurPeople = () => {
         </FadeIn>
 
         {/* Management */}
-        <div className="mt-16">
+        {/* <div className="mt-16">
           <FadeIn from="left">
             <h3 className="text-2xl font-semibold text-brand-dark mb-8">Management</h3>
           </FadeIn>
@@ -326,7 +329,6 @@ const OurPeople = () => {
                            grid md:grid-cols-12 gap-6 items-center"
               >
                 <div className="md:col-span-3 flex justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={member.imageUrl}
                     alt={member.name}
@@ -341,7 +343,7 @@ const OurPeople = () => {
               </FadeIn>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Board of Directors */}
         <div className="mt-16">
@@ -657,7 +659,7 @@ export default function AboutPage() {
       <Disclosures />
       <TermsAndConditions />
       <Subscribe/>
-            <div>
+<div>
           {/* ===== Floating Read Summary Button ===== */}
 <button
   onClick={() => window.location.href = 'https://www.iiasadvisory.com/'}
@@ -666,8 +668,9 @@ export default function AboutPage() {
     bg-teal-700 hover:bg-teal-800
     text-white font-semibold 
     py-3 px-4 rounded-l-lg shadow-lg 
-    z-50 transition-colors duration-200 min-w-[120px]
+    z-50 transition-colors duration-200 
     flex items-center gap-2
+    [writing-mode:vertical-rl]
   "
 >
   <svg
@@ -680,7 +683,7 @@ export default function AboutPage() {
   >
     <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
   </svg>
-  <span >IiAS</span>
+  <span className="rotate-180">IiAS</span>
 </button>
 
       </div>
@@ -688,12 +691,13 @@ export default function AboutPage() {
 <button
   onClick={() => window.location.href = 'https://www.iiasadrian.com/'}
   className="
-    fixed top-1/3 right-0 -translate-y-1/2 
+    fixed top-1/2 right-0 -translate-y-1/2 
     bg-teal-700 hover:bg-teal-800
     text-white font-semibold 
     py-3 px-4 rounded-l-lg shadow-lg 
-    z-50 transition-colors duration-200 min-w-[120px]
+    z-50 transition-colors duration-200 
     flex items-center gap-2
+    [writing-mode:vertical-rl]
     
   "
 >
@@ -707,7 +711,7 @@ export default function AboutPage() {
   >
     <path strokeLinecap='round' strokeLinejoin='round' d='M15 19l-7-7 7-7' />
   </svg>
-  <span >ADRIAN</span>
+  <span className="rotate-180">ADRIAN</span>
 </button>
       </div>
     </>

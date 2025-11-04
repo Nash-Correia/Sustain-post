@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Note, Report, UserReport, Company, Fund, UserCompany, CustomUser,PurchaseLog
+from .models import Tag, Article 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for CustomUser model with profile fields built-in"""
@@ -186,3 +187,23 @@ class PurchaseLogSerializer(serializers.ModelSerializer):
             # 'company_isin', # Optional
         )
         read_only_fields = fields # Make all fields read-only in this context
+
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['name', 'slug']
+
+class ArticleSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
+    # Format the date nicely
+    publication_date = serializers.DateField(format="%d %B, %Y") 
+    main_image = serializers.ImageField(use_url=True, required=False)
+
+    class Meta:
+        model = Article
+        fields = [
+            'id', 'title', 'slug', 'category', 
+            'publication_date', 'main_image','content', 'tags', 'external_link'
+        ]
