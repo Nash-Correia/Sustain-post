@@ -67,3 +67,33 @@ input::placeholder, textarea::placeholder {
   -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
   mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
 }
+
+
+
+
+/* Base size (default) */
+html {
+  font-size: 16px;
+  /* You can also use 100% if you prefer */
+}
+
+/* For screens wider than 1920px (e.g., large 1080p/1440p desktops) */
+@media (min-width: 1920px) {
+  html {
+    font-size: 18px; /* Scales everything by 1.125x */
+  }
+}
+
+/* For screens wider than 2560px (e.g., large 1440p or 4K monitors) */
+@media (min-width: 2560px) {
+  html {
+    font-size: 20px; /* Scales everything by 1.25x */
+  }
+}
+
+/* For screens wider than 3840px (e.g., ultrawide or large 4K TVs) */
+@media (min-width: 3840px) {
+  html {
+    font-size: 24px; /* Scales everything by 1.5x */
+  }
+}
