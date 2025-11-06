@@ -11,5 +11,6 @@ export const ROUTES={
     login: "/login",
     signup: "/signup",
     price: "/price",
+    portfolio: "/portfolio",
 }; 
 export const SITE={name:'IiAS Sustain',tagline:'Evidence-based Governance & ESG'};
