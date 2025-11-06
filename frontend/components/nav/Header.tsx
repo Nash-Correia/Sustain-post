@@ -228,14 +228,14 @@ export default function Header() {
                 <MenuItem href={ `${ROUTES.price}`}>Report Pricing</MenuItem>
               </Dropdown>
 
-              <Link href={ROUTES.methodology} className={navLinkClasses}>
+              {/* <Link href={ROUTES.methodology} className={navLinkClasses}>
                 Methodology
-              </Link>
-              {/* <Dropdown label="Methodology" className={navLinkClasses} align="center">
+              </Link> */}
+              <Dropdown label="Methodology" className={navLinkClasses} align="center">
                 <MenuItem href={ROUTES.methodology}>Methodology</MenuItem>
                 <MenuItem href={ROUTES.institutionalEye}>Institutional Eye</MenuItem>
                 <MenuItem href={ROUTES.specials}>Specials</MenuItem>
-              </Dropdown> */}
+              </Dropdown>
               
               <Dropdown label="About" className={navLinkClasses} align="center">
                 <MenuItem href={`${ROUTES.about}#sustain`}>Sustain</MenuItem>
