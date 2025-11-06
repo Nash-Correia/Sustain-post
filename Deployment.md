@@ -96,7 +96,7 @@ npm start
 | Variable Name                 | Required Production Value              |
 | ----------------------------- | -------------------------------------- |
 | **NEXT_PUBLIC_API_BASE_URL**  | e.g. `https://api.your-domain.com`     |
-| **NEXT_PUBLIC_WEB3FORMS_KEY** | `3fe31dbc-b6ee-4ce4-a9fe-5f54d6948641` |
+| **NEXT_PUBLIC_WEB3FORMS_KEY** | `bd18762e-3479-41e1-a4c0-021ea39a5d6f` |
 
 
 

@@ -226,7 +226,7 @@ export default function Header() {
                 <MenuItem href={ROUTES.productB}>Company Reports</MenuItem>
                 <MenuItem href={ `${ROUTES.productA}?q=&type=Companies`}>Company Compare</MenuItem>
                 <MenuItem href={ `${ROUTES.price}`}>Report Pricing</MenuItem>
-                <MenuItem href={ `${ROUTES.portfolio}`}>Create Portfolio</MenuItem>
+                {/* <MenuItem href={ `${ROUTES.portfolio}`}>Create Portfolio</MenuItem> */}
               </Dropdown>
 
               <Link href={ROUTES.methodology} className={navLinkClasses}>
