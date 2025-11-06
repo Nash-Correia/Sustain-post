@@ -259,7 +259,7 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
         <ModalHeader className="flex flex-col gap-1">
           <h3 className="text-xl font-semibold text-gray-800">Contact Sales</h3>
           <p className="text-sm font-normal text-gray-600">
-            Fill out the form below and we'll get back to you within one business day.
+            Fill out the form below and we will get back to you within one business day.
           </p>
         </ModalHeader>
         <ModalBody>
