@@ -1,9 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Card, CardHeader, CardBody, CardFooter, Button, Image } from '@nextui-org/react';
+import { Card, CardHeader, CardBody, CardFooter, Button, Image, Chip } from '@nextui-org/react';
 
-// Define the Article interface
 interface Article {
   id: number;
   title: string;
@@ -12,54 +11,75 @@ interface Article {
   content: string;
   tags: { name: string; slug: string }[];
   external_link?: string;
-  main_image?: string | null; // <-- Added image
+  main_image?: string | null;
 }
-
 interface ArticleCardProps {
   article: Article;
-  onReadMore: (article: Article) => void; // <-- Function to open modal
+  onReadMore: (article: Article) => void;
 }
 
-// Helper function to create a plain-text snippet
-function createSnippet(htmlContent: string, length = 100) {
-  if (!htmlContent) return '';
-  const text = htmlContent.replace(/<[^>]+>/g, ''); // Strip HTML tags
-  if (text.length <= length) return text;
-  return text.substring(0, length) + '...';
+function createSnippet(html: string, length = 120) {
+  const text = (html || '').replace(/<[^>]+>/g, '').trim();
+  return text.length <= length ? text : `${text.slice(0, length)}…`;
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onReadMore }) => {
-  // Construct the full image URL
-  // Checks if the image URL is already a full URL or just a path
-  const imageUrl = article.main_image 
-    ? (article.main_image.startsWith('http') ? article.main_image : `${process.env.NEXT_PUBLIC_API_BASE_URL}${article.main_image}`)
-    : 'https://placehold.co/600x400/EEE/313131?text=IiAS'; // Placeholder
+  const imageUrl = article.main_image
+    ? (article.main_image.startsWith('http')
+        ? article.main_image
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL}${article.main_image}`)
+    : 'https://placehold.co/800x450/EEF2F7/475569?text=IiAS';
+
+  const date = new Date(article.publication_date).toLocaleDateString('en-IN', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  });
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card
+      className="
+        group h-full overflow-hidden border border-gray-200 shadow-sm
+        transition hover:-translate-y-0.5 hover:shadow-md
+        rounded-2xl
+      "
+    >
       <CardHeader className="p-0">
         <Image
           isZoomed
           alt={article.title}
-          className="object-cover w-full h-[200px]"
           src={imageUrl}
-          width="100%"
+          radius="none"
+          className="h-[200px] w-full object-cover"
         />
       </CardHeader>
-      <CardBody className="flex-grow p-4">
-        <p className="text-sm text-gray-500 mb-1">{article.publication_date}</p>
-        <h3 className="text-lg font-bold mb-2 line-clamp-2 h-[3.2em]">{article.title}</h3>
-        <p className="text-sm text-gray-700 line-clamp-3 h-[4.5em]">
-          {createSnippet(article.content, 120)}
+
+      <CardBody className="flex flex-col gap-2 p-4">
+        <div className="flex items-center justify-between">
+          <time className="text-xs text-gray-500">{date}</time>
+          <div className="flex flex-wrap gap-1">
+            {article.tags?.slice(0, 2).map((t) => (
+              <Chip key={t.slug} size="sm" variant="flat" color="primary">
+                {t.name}
+              </Chip>
+            ))}
+          </div>
+        </div>
+
+        <h3 className="line-clamp-2 text-lg font-bold leading-snug text-gray-900">
+          {article.title}
+        </h3>
+        <p className="line-clamp-3 text-sm text-gray-700">
+          {createSnippet(article.content, 140)}
         </p>
       </CardBody>
-      <CardFooter className="p-4">
-        <Button 
-          color="primary" 
-          variant="ghost" 
-          onPress={() => onReadMore(article)} // <-- Opens the modal
+
+      <CardFooter className="p-4 pt-0">
+        <Button
+          color="primary"
+          variant="ghost"
+          className="w-full"
+          onPress={() => onReadMore(article)}
         >
-          Read More
+          Read more
         </Button>
       </CardFooter>
     </Card>

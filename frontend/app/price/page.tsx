@@ -130,7 +130,7 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
       </div>
 
       {/* --- Pricing Cards Grid --- */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-w-200  mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-300  mx-auto">
 
         {/* --- Plan 1: Single Report --- */}
         <Card className="p-4 shadow-lg border-2 border-primary">
@@ -139,7 +139,7 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
             <p className="text-gray-500">One-time purchase</p>
           </CardHeader>
           <Divider />
-          <CardBody className="gap-6 py-8 min-h-100">
+          <CardBody className="gap-6 py-8 min-h-80">
             <div className="text-center">
               <span className="text-4xl font-bold">₹15,000</span>
               <span className="text-gray-500"> / per report</span>
@@ -170,20 +170,20 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
             </Button>
           </CardFooter>
         </Card>
-
+ 
         {/* --- Plan 2: Full Access --- */}
         <Card className="p-4 shadow-lg border-2 border-primary">
           <CardHeader className="flex flex-col items-start gap-2">
             <div className="flex justify-between items-center w-full">
-              <h3 className="text-2xl font-semibold">Full Access</h3>
+              <h3 className="text-2xl font-semibold">All Reports</h3>
               <Chip color="primary" variant="flat">Most Popular</Chip>
             </div>
-            <p className="text-gray-500">Billed annually</p>
+            <p className="text-gray-500">One-time purchase</p>
           </CardHeader>
           <Divider />
-          <CardBody className="gap-6 py-8 min-h-100">
+          <CardBody className="gap-6 py-8 min-h-80">
             <div className="text-center">
-              <span className="text-4xl font-bold">₹5,00,000</span>
+              <span className="text-4xl font-bold">₹4,00,000</span>
               <span className="text-gray-500"> / year</span>
             </div>
             <p className="text-gray-600">
@@ -216,16 +216,16 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
         <Card className="p-4 shadow-lg border-2 border-primary">
           <CardHeader className="flex flex-col items-start gap-2">
             <div className="flex justify-between items-center w-full">
-              <h3 className="text-2xl font-semibold">Bundle Access</h3>
+              <h3 className="text-2xl font-semibold">Bundle Purchase</h3>
             </div>
             <p className="text-gray-500">Tailored package for selective access</p>
           </CardHeader>
           <Divider />
-          <CardBody className="gap-6 py-8 min-h-100">
-            <div className="text-center">
-              <span className="text-4xl font-bold">₹13,000</span>
+          <CardBody className="gap-6 py-8 min-h-80">
+            {/* <div className="text-center">
+              <span className="text-4xl font-bold">Contact Sales</span>
               <span className="text-gray-500"> / report</span>
-            </div>
+            </div> */}
             <p className="text-gray-600">
               Ideal for institutions seeking targeted coverage. Choose a curated set of company reports and research that best fit your portfolio or sectoral focus.
             </p>

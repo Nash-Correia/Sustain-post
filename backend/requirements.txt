@@ -14,3 +14,4 @@ psycopg2
 gunicorn
 django-filter
 Pillow
+django-cors-headers
