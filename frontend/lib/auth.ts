@@ -134,8 +134,8 @@ class AuthService {
       console.log('🚫 No token or skipping auth for:', url);
     }
 
-    console.log('🌐 Making request to:', `${API_BASE_URL}${url}`);
-    const response = await fetch(`${API_BASE_URL}${url}`, config);
+    console.log('🌐 Making request to:', `${API_BASE_URL}/api${url}`);
+    const response = await fetch(`${API_BASE_URL}/api${url}`, config);
 
     // If token expired, try to refresh
     if (response.status === 401 && this.refreshToken && !url.includes('token/')) {
@@ -146,7 +146,7 @@ class AuthService {
           ...config.headers,
           Authorization: `Bearer ${this.accessToken}`,
         };
-        return fetch(`${API_BASE_URL}${url}`, config);
+        return fetch(`${API_BASE_URL}/api${url}`, config);
       }
     }
 
@@ -241,7 +241,7 @@ class AuthService {
     if (!this.refreshToken) return false;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
+      const response = await fetch(`${API_BASE_URL}/api/token/refresh/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -682,7 +682,7 @@ export const companyAPI = {
     // Try direct fetch first to see if authService.makeRequest is the issue
     try {
       console.log('🔄 Trying direct fetch approach...');
-      const directResponse = await fetch(`${API_BASE_URL}/companies/`, {
+      const directResponse = await fetch(`${API_BASE_URL}/api/companies/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

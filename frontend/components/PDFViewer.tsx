@@ -46,7 +46,7 @@ export default function PDFViewer({
     try {
       const token = authService.getAccessToken();
       const response = await fetch(
-        `${API_BASE_URL}/reports/view/${encodeURIComponent(
+        `${API_BASE_URL}/api/reports/view/${encodeURIComponent(
           companyName
         )}/`,
         {
@@ -106,7 +106,7 @@ export default function PDFViewer({
     try {
       const token = authService.getAccessToken();
       const response = await fetch(
-        `${API_BASE_URL}/reports/download/${encodeURIComponent(
+        `${API_BASE_URL}/api/reports/download/${encodeURIComponent(
           companyName
         )}/`,
         {

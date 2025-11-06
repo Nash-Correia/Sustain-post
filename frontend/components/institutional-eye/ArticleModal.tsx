@@ -29,7 +29,7 @@ export const ArticleModal: React.FC<ArticleModalProps> = ({ article, isOpen, onC
   const fullImage =
     article.main_image && (article.main_image.startsWith('http')
       ? article.main_image
-      : `${process.env.NEXT_PUBLIC_API_BASE_URL}${article.main_image}`);
+      : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api${article.main_image}`);
 
   return (
     <Modal

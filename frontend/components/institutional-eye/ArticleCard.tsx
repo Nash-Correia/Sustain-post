@@ -27,7 +27,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onReadMore })
   const imageUrl = article.main_image
     ? (article.main_image.startsWith('http')
         ? article.main_image
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}${article.main_image}`)
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api${article.main_image}`)
     : 'https://placehold.co/800x450/EEF2F7/475569?text=IiAS';
 
   const date = new Date(article.publication_date).toLocaleDateString('en-IN', {

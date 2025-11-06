@@ -74,7 +74,7 @@ export default function PricingPage({ companyOptions = [], year }: PricingPagePr
         console.warn('NEXT_PUBLIC_API_BASE_URL not set; skipping logPurchase fetch');
         return true;
       }
-      const resp = await fetch(`${base}/log-purchase/`, {
+      const resp = await fetch(`${base}/api/log-purchase/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

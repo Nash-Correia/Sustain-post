@@ -114,7 +114,7 @@ export default function RatingTable(p: Props) {
         return false;
       }
 
-      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/log-purchase/`, {
+      const resp = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/log-purchase/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
