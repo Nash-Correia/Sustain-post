@@ -1,0 +1,25 @@
+Ignore the Python virtual environment
+
+env/
+.venv/
+
+Ignore Python cache files
+
+pycache/
+*.pyc
+
+Ignore the local SQLite database (production uses Postgres)
+
+db.sqlite3
+*.sqlite3
+
+Ignore local media files (production uses S3)
+
+media/
+
+Ignore Git and IDE files
+
+.git/
+.gitignore
+.vscode/
+.idea/

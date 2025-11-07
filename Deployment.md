@@ -54,18 +54,21 @@ gunicorn backend.wsgi:application --bind 0.0.0.0:$PORT
 
 ### 🌍 Production Environment Variables
 
-| Variable Name            | Required Production Value                |
-| ------------------------ | ---------------------------------------- |
-| **DEBUG**                | `False`                                  |
-| **SECRET_KEY**           | *Generate a new strong secret key*       |
-| **DJANGO_ALLOWED_HOSTS** | e.g. `api.your-domain.com`               |
-| **CORS_ALLOWED_ORIGINS** | e.g. `https://your-domain.com`           |
-| **DB_NAME**              | `sustain_db` (or your RDS database name) |
-| **DB_USER**              | `sustain_user` (or RDS master username)  |
-| **DB_PASS**              | *RDS database password*                  |
-| **DB_HOST**              | *RDS instance endpoint URL*              |
-| **DB_PORT**              | `5432` (default PostgreSQL port)         |
-
+| Variable Name               | Required Production Value                                      |
+| --------------------------- | -------------------------------------------------------------- |
+| **DEBUG**                   | `False`                                                        |
+| **SECRET_KEY**              | *Generate a new strong secret key*                             |
+| **DJANGO_ALLOWED_HOSTS**    | e.g. `api.your-domain.com`                                     |
+| **CORS_ALLOWED_ORIGINS**    | e.g. `https://your-domain.com`                                 |
+| **DB_NAME**                 | `sustain_db` (or your RDS database name)                       |
+| **DB_USER**                 | `sustain_user` (or RDS master username)                        |
+| **DB_PASS**                 | *RDS database password*                                        |
+| **DB_HOST**                 | *RDS instance endpoint URL*                                    |
+| **DB_PORT**                 | `5432` (default PostgreSQL port)                               |
+| **AWS_ACCESS_KEY_ID**       | The access key for an IAM user with S3 permissions.            |
+| **AWS_SECRET_ACCESS_KEY**   | The secret key for the IAM user.                               |
+| **AWS_STORAGE_BUCKET_NAME** | The exact name of the S3 bucket created to store media files.  |
+| **AWS_S3_REGION_NAME**      | The AWS region where the S3 bucket is located.                 |
 
 ---
 

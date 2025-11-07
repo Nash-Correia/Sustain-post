@@ -1,1 +1,6 @@
 /deploy
+
+
+.env.*
+
+docker-compose.yaml

@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -199,5 +200,35 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if DEBUG:
+    # Development: Use local filesystem for media files
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+    
+else:
+    # Production: Use AWS S3 for media files
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    
+    # Use S3 for default file storage (e.g., FileField, ImageField)
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    
+    # Configure S3 to not overwrite files with the same name
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None # Or 'public-read' if you want files public by default
+    AWS_S3_VERIFY = True # Use SSL
+    
+    # Set the URL for media files
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    # Set the base directory for media file uploads within the bucket
+    MEDIA_ROOT = 'media' # This will upload files to s3://your-bucket-name/media/
+
+    # Note: Static files (STATIC_URL) are separate.
+    # If you also want to host static files on S3, you would set:
+    # STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+    # STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+    # STATIC_ROOT = 'static'

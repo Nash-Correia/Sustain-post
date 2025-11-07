@@ -15,3 +15,5 @@ gunicorn
 django-filter
 Pillow
 django-cors-headers
+boto3
+django-storages
